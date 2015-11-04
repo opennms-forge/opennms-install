@@ -120,8 +120,8 @@ checkError() {
 ####
 # Install OpenNMS Debian repository for specific release
 installOnmsRepo() {
+  echo -n "Install OpenNMS Repository         ... "
   if [ ! -f /etc/apt/sources.list.d/opennms-${RELEASE}.list ]; then
-    echo -n "Install OpenNMS Repository         ... "
     printf "deb http://${MIRROR} ${RELEASE} main\ndeb-src http://${MIRROR} ${RELEASE} main" \
            > /etc/apt/sources.list.d/opennms-${RELEASE}.list
     checkError ${?}
@@ -129,6 +129,8 @@ installOnmsRepo() {
     echo -n "Install OpenNMS Repository Key     ... "
     wget -q -O - http://${MIRROR}/OPENNMS-GPG-KEY | sudo apt-key add - 1>/dev/null 2>>${ERROR_LOG}
     checkError ${?}
+  else
+    echo "SKIP - file opennms-${RELEASE}.list already exist"
   fi
 }
 
@@ -155,15 +157,15 @@ queryDbCredentials() {
   sudo -u postgres psql -c "CREATE USER ${DB_USER} WITH PASSWORD '${DB_PASS}';" 1>/dev/null 2>>${ERROR_LOG}
   sudo -u postgres psql -c "CREATE DATABASE opennms;" 1>/dev/null 2>>${ERROR_LOG}
   sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE opennms to ${DB_USER};" 1>/dev/null 2>>${ERROR_LOG}
-  echo ""
 }
 
 ####
 # Generate OpenNMS configuration file for accessing the PostgreSQL
 # Database with credentials
 setCredentials() {
+  echo ""
+  echo -n "Generate OpenNMS data source config   ... "
   if [ -f "${OPENNMS_HOME}/etc/opennms-datasources.xml" ]; then
-    echo -n "Generate OpenNMS data source config   ... "
     printf '<?xml version="1.0" encoding="UTF-8"?>
 <datasource-configuration>
   <connection-pool factory="org.opennms.core.db.C3P0ConnectionFactory"
@@ -189,16 +191,21 @@ setCredentials() {
 </datasource-configuration>' ${DB_USER} ${DB_PASS} ${DB_USER} ${DB_PASS} \
   > ${OPENNMS_HOME}/etc/opennms-datasources.xml
   checkError ${?}
+  else
+    echo "No OpenNMS configuration found in ${OPENNMS_HOME}/etc"
+    exit ${E_ILLEGAL_ARGS}
   fi
 }
 
 ####
 # Initialize the OpenNMS database schema
 initializeOnmsDb() {
+  echo -n "Initialize OpenNMS                    ... "
   if [ ! -f $OPENNMS_HOME/etc/configured ]; then
-    echo -n "Initialize OpenNMS                    ... "
     ${OPENNMS_HOME}/bin/install -dis 1>/dev/null 2>>${ERROR_LOG}
     checkError ${?}
+  else
+    echo "SKIP - already configured"
   fi
 }
 
