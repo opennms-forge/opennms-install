@@ -85,7 +85,8 @@ if [ "${USER}" != "${REQUIRED_USER}" ]; then
 fi
 
 ####
-# The -r option is optional and allows to set the release of OpenNMS
+# The -r option is optional and allows to set the release of OpenNMS.
+# The -m option allows to overwrite the package repository server.
 while getopts r:m:h flag; do
   case ${flag} in
     r)
