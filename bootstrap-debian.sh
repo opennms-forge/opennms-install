@@ -116,7 +116,7 @@ installOnmsRepo() {
 ####
 # Install the OpenNMS application from Debian repository
 installOnmsApp() {
-  echo -n "Update repository for OpenNMS      ... "
+  echo -n "Update repository                  ... "
   apt-get update 1>/dev/null 2>>${ERROR_LOG}
   checkError ${?}
 
