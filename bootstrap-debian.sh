@@ -29,8 +29,10 @@ usage() {
   echo "-h: Show this help"
 }
 
-if [ ! -z ${SYSTEM} ]; then
-  echo "This system is not support. This setup runs on ${REQUIRED_SYSTEMS} sytems."
+# Test if system is supported
+cat /etc/issue | grep -E ${REQUIRED_SYSTEMS}  1>/dev/null 2>>${ERROR_LOG}
+if [ ! ${?} -eq 0 ]; then
+  echo "This is system is not a supported Ubuntu or Debian system."
   exit ${E_UNSUPPORTED}
 fi
 
