@@ -29,7 +29,7 @@ usage() {
   echo "-h: Show this help"
 }
 
-if [ ! -z ${SYSTEM}]; then
+if [ ! -z ${SYSTEM} ]; then
   echo "This system is not support. This setup runs on ${REQUIRED_SYSTEMS} sytems."
   exit ${E_UNSUPPORTED}
 fi
