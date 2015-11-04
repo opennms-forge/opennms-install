@@ -10,6 +10,7 @@ OPENNMS_HOME="/usr/share/opennms"
 REQUIRED_USER="root"
 USER=$(whoami)
 MIRROR="debian.mirrors.opennms.org"
+ANSWER="No"
 
 REQUIRED_SYSTEMS="Ubuntu|Debian"
 SYSTEM=$(cat /etc/issue | grep -E ${REQUIRED_SYSTEMS})
@@ -30,6 +31,43 @@ usage() {
   echo "-m: Set alternative mirror server for packages"
   echo "    Default: ${MIRROR}"
   echo "-h: Show this help"
+}
+
+showDisclaimer() {
+  echo ""
+  echo "This script installs  OpenNMS ${RELEASE} on your system."
+  echo "It will install all components necessary to run OpenNMS."
+  echo ""
+  echo "The following components will be installed:"
+  echo ""
+  echo " - Oracle Java 8 JDK"
+  echo " - PostgreSQL Server"
+  echo " - OpenNMS Repositories"
+  echo " - OpenNMS with core services and Webapplication"
+  echo " - Initialize and bootstrapping the database"
+  echo " - Enable OpenNMS on system start"
+  echo ""
+  echo "If you have  OpenNMS already  installed, don't  use this"
+  echo "script!"
+  echo ""
+  read -p "If you want to proceed, type YES: " ANSWER
+
+  # Set bash to case insensitive
+  shopt -s nocasematch
+
+  if [[ "${ANSWER}" == "yes" ]]; then
+    echo ""
+    echo "Starting setup procedure ... "
+    echo ""
+  else
+    echo ""
+    echo "Your system is not changed. Thank you computing with us"
+    echo ""
+    exit ${E_BASH}
+  fi
+
+  # Set case sensitive
+  shopt -u nocasematch
 }
 
 # Test if system is supported
@@ -88,7 +126,7 @@ installOnmsRepo() {
     checkError ${?}
 
     echo -n "Install OpenNMS Repository Key     ... "
-    wget -q -O - http://debian.mirrors.opennms.org/OPENNMS-GPG-KEY | sudo apt-key add - 1>/dev/null 2>>${ERROR_LOG}
+    wget -q -O - http://${MIRROR}/OPENNMS-GPG-KEY | sudo apt-key add - 1>/dev/null 2>>${ERROR_LOG}
     checkError ${?}
   fi
 }
@@ -124,7 +162,7 @@ queryDbCredentials() {
 # Database with credentials
 setCredentials() {
   if [ -f "${OPENNMS_HOME}/etc/opennms-datasources.xml" ]; then
-    echo -n "Generate OpenNMS data source config   ..."
+    echo -n "Generate OpenNMS data source config   ... "
     printf '<?xml version="1.0" encoding="UTF-8"?>
 <datasource-configuration>
   <connection-pool factory="org.opennms.core.db.C3P0ConnectionFactory"
@@ -164,15 +202,23 @@ initializeOnmsDb() {
 }
 
 restartOnms() {
-  echo -n "Starting OpenNMS                      ..."
+  echo -n "Starting OpenNMS                      ... "
   service opennms restart 1>/dev/null 2>>${ERROR_LOG}
   checkError ${?}
 }
 
 # Execute setup procedure
+clear
+showDisclaimer
 installOnmsRepo
 installOnmsApp
 queryDbCredentials
 setCredentials
 initializeOnmsDb
 restartOnms
+
+echo "OpenNMS should be up and running. You can access the WebUI on http://this-system:8980"
+echo "It is possible to login with the user admin and password admin"
+echo ""
+echo "Please change immediately the password for your admin user!"
+echo "Thank you computing with us."
