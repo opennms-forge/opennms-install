@@ -9,6 +9,7 @@ DB_PASS="opennms"
 OPENNMS_HOME="/usr/share/opennms"
 REQUIRED_USER="root"
 USER=$(whoami)
+MIRROR="debian.mirrors.opennms.org"
 
 REQUIRED_SYSTEMS="Ubuntu|Debian"
 SYSTEM=$(cat /etc/issue | grep -E ${REQUIRED_SYSTEMS})
@@ -25,7 +26,9 @@ usage() {
   echo "Bootstrap OpenNMS basic setup on Debian based system."
   echo ""
   echo "-r: Set a release: stable | testing | snapshot"
-  echo "    Default: stable"
+  echo "    Default: ${RELEASE}"
+  echo "-m: Set alternative mirror server for packages"
+  echo "    Default: ${MIRROR}"
   echo "-h: Show this help"
 }
 
@@ -45,10 +48,13 @@ fi
 
 ####
 # The -r option is optional and allows to set the release of OpenNMS
-while getopts r:h flag; do
+while getopts r:m:h flag; do
   case ${flag} in
     r)
         RELEASE="${OPTARG}"
+        ;;
+    m)
+        MIRROR="${OPTARG}"
         ;;
     h)
       usage
@@ -77,7 +83,7 @@ checkError() {
 installOnmsRepo() {
   if [ ! -f /etc/apt/sources.list.d/opennms-${RELEASE}.list ]; then
     echo -n "Install OpenNMS Repository         ... "
-    printf "deb http://debian.mirrors.opennms.org ${RELEASE} main\ndeb-src http://debian.mirrors.opennms.org ${RELEASE} main" \
+    printf "deb http://${MIRROR} ${RELEASE} main\ndeb-src http://${MIRROR} ${RELEASE} main" \
            >> /etc/apt/sources.list.d/opennms-${RELEASE}.list
     checkError ${?}
 
