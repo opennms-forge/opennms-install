@@ -73,32 +73,6 @@ checkError() {
 }
 
 ####
-# Install dependencies to maintain Ubuntu and Debian repositories
-installDependencies() {
-  echo -n "Install python-software-properties ... "
-  apt-get install -y python-software-properties 1>/dev/null 2>>${ERROR_LOG}
-  checkError ${?}
-}
-
-####
-# Install Oracle Java 8 with ppa repository
-installJava() {
-  if [ ! -f /etc/apt/sources.list.d/webupd8team-java-*.list ]; then
-    echo -n "Install Oracle Java 8 Repository   ... "
-    add-apt-repository ppa:webupd8team/java 1>/dev/null 2>>${ERROR_LOG}
-    checkError ${?}
-
-    echo -n "Update repository for Oracle Java  ... "
-    apt-get update 1>/dev/null 2>${ERROR_LOG}
-    checkError ${?}
-  fi
-
-  echo -n "Install Oracle Java 8              ... "
-  apt-get install -y oracle-java8-installer 1>/dev/null 2>>${ERROR_LOG}
-  checkError ${?}
-}
-
-####
 # Install OpenNMS Debian repository for specific release
 installOnmsRepo() {
   if [ ! -f /etc/apt/sources.list.d/opennms-${RELEASE}.list ]; then
@@ -119,6 +93,10 @@ installOnmsApp() {
   echo -n "Update repository                  ... "
   apt-get update 1>/dev/null 2>>${ERROR_LOG}
   checkError ${?}
+
+  echo debconf shared/accepted-oracle-license-v1-1 select true | debconf-set-selections  1>/dev/null 2>>${ERROR_LOG}
+  echo debconf shared/accepted-oracle-license-v1-1 seen true | /usr/bin/debconf-set-selections 1>/dev/null 2>>${ERROR_LOG}
+  echo "opennmsdb opennms-db/noinstall string ok" | debconf-set-selections 1>/dev/null 2>>${ERROR_LOG}
 
   echo -n "Install OpenNMS application        ... "
   apt-get install -y opennms 1>/dev/null 2>>${ERROR_LOG}
