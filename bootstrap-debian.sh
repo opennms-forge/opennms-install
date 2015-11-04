@@ -84,7 +84,7 @@ installOnmsRepo() {
   if [ ! -f /etc/apt/sources.list.d/opennms-${RELEASE}.list ]; then
     echo -n "Install OpenNMS Repository         ... "
     printf "deb http://${MIRROR} ${RELEASE} main\ndeb-src http://${MIRROR} ${RELEASE} main" \
-           >> /etc/apt/sources.list.d/opennms-${RELEASE}.list
+           > /etc/apt/sources.list.d/opennms-${RELEASE}.list
     checkError ${?}
 
     echo -n "Install OpenNMS Repository Key     ... "
@@ -99,34 +99,32 @@ installOnmsApp() {
   echo -n "Update repository                  ... "
   apt-get update 1>/dev/null 2>>${ERROR_LOG}
   checkError ${?}
-
-  echo debconf shared/accepted-oracle-license-v1-1 select true | debconf-set-selections  1>/dev/null 2>>${ERROR_LOG}
-  echo debconf shared/accepted-oracle-license-v1-1 seen true | /usr/bin/debconf-set-selections 1>/dev/null 2>>${ERROR_LOG}
-  echo "opennmsdb opennms-db/noinstall string ok" | debconf-set-selections 1>/dev/null 2>>${ERROR_LOG}
-
-  echo -n "Install OpenNMS application        ... "
-  apt-get install -y opennms 1>/dev/null 2>>${ERROR_LOG}
+  apt-get install -y opennms
   ${OPENNMS_HOME}/bin/runjava -s 1>/dev/null 2>>${ERROR_LOG}
   checkError ${?}
+  clear
 }
 
 ####
 # Helper to request Postgres credentials to initialize the
 # OpenNMS database.
 queryDbCredentials() {
+  echo ""
   echo "PostgreSQL credentials for OpenNMS"
   read -p "Enter username: " DB_USER
   read -s -p "Enter password: " DB_PASS
-  sudo -u postgres psql -c "CREATE ROLE ${DB_USER} WITH LOGIN;" 1>/dev/null 2>>${ERROR_LOG}
-  sudo -u postgres psql -c "ALTER ROLE ${DB_USER} WITH PASSWORD '${DB_PASS}';" 1>/dev/null 2>>${ERROR_LOG}
+  sudo -u postgres psql -c "CREATE USER ${DB_USER} WITH PASSWORD '${DB_PASS}';" 1>/dev/null 2>>${ERROR_LOG}
+  sudo -u postgres psql -c "CREATE DATABASE opennms;" 1>/dev/null 2>>${ERROR_LOG}
+  sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE opennms to ${DB_USER};" 1>/dev/null 2>>${ERROR_LOG}
+  echo ""
 }
 
 ####
 # Generate OpenNMS configuration file for accessing the PostgreSQL
 # Database with credentials
 setCredentials() {
-  if [ -f ${OPENNMS_HOME}/etc/opennms-datasource.xml ]; then
-    echo "Generate OpenNMS data source config   ..."
+  if [ -f "${OPENNMS_HOME}/etc/opennms-datasources.xml" ]; then
+    echo -n "Generate OpenNMS data source config   ..."
     printf '<?xml version="1.0" encoding="UTF-8"?>
 <datasource-configuration>
   <connection-pool factory="org.opennms.core.db.C3P0ConnectionFactory"
@@ -150,7 +148,7 @@ setCredentials() {
                     user-name="%s"
                     password="%s" />
 </datasource-configuration>' ${DB_USER} ${DB_PASS} ${DB_USER} ${DB_PASS} \
-  >> ${OPENNMS_HOME}/etc/opennms-datasource.xml
+  > ${OPENNMS_HOME}/etc/opennms-datasources.xml
   checkError ${?}
   fi
 }
@@ -159,10 +157,16 @@ setCredentials() {
 # Initialize the OpenNMS database schema
 initializeOnmsDb() {
   if [ ! -f $OPENNMS_HOME/etc/configured ]; then
-    echo -n "Initialize OpenNMS                 ... "
+    echo -n "Initialize OpenNMS                    ... "
     ${OPENNMS_HOME}/bin/install -dis 1>/dev/null 2>>${ERROR_LOG}
     checkError ${?}
   fi
+}
+
+restartOnms() {
+  echo -n "Starting OpenNMS                      ..."
+  service opennms restart 1>/dev/null 2>>${ERROR_LOG}
+  checkError ${?}
 }
 
 # Execute setup procedure
@@ -171,3 +175,4 @@ installOnmsApp
 queryDbCredentials
 setCredentials
 initializeOnmsDb
+restartOnms
