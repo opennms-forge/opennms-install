@@ -31,14 +31,14 @@ usage() {
 
 if [ ! -z ${SYSTEM}]; then
   echo "This system is not support. This setup runs on ${REQUIRED_SYSTEMS} sytems."
-  exit E_UNSUPPORTED
+  exit ${E_UNSUPPORTED}
 fi
 
 # Setting Postgres User and changing configuration files require
 # root permissions.
 if [ "${USER}" != "${REQUIRED_USER}" ]; then
   echo "This script requires root permissions to be executed."
-  exit E_BASH
+  exit ${E_BASH}
 fi
 
 ####
@@ -50,7 +50,7 @@ while getopts r:h flag; do
         ;;
     h)
       usage
-      exit
+      exit ${E_ILLEGAL_ARGS}
       ;;
     *)
       usage
@@ -66,7 +66,7 @@ checkError() {
     echo "OK"
   else
     echo "FAILED"
-    exit E_BASH
+    exit ${E_BASH}
   fi
 }
 
