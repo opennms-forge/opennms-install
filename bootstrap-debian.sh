@@ -35,8 +35,8 @@ usage() {
 
 showDisclaimer() {
   echo ""
-  echo "This script installs  OpenNMS ${RELEASE} on your system."
-  echo "It will install all components necessary to run OpenNMS."
+  echo "This script installs OpenNMS on  your system. It will"
+  echo "install  all  components necessary  to  run  OpenNMS."
   echo ""
   echo "The following components will be installed:"
   echo ""
@@ -45,9 +45,9 @@ showDisclaimer() {
   echo " - OpenNMS Repositories"
   echo " - OpenNMS with core services and Webapplication"
   echo " - Initialize and bootstrapping the database"
-  echo " - Enable OpenNMS on system start"
+  echo " - Start OpenNMS"
   echo ""
-  echo "If you have  OpenNMS already  installed, don't  use this"
+  echo "If you have OpenNMS already installed, don't use this"
   echo "script!"
   echo ""
   read -p "If you want to proceed, type YES: " ANSWER
@@ -61,7 +61,8 @@ showDisclaimer() {
     echo ""
   else
     echo ""
-    echo "Your system is not changed. Thank you computing with us"
+    echo "Your system is unchanged."
+    echo "Thank you computing with us"
     echo ""
     exit ${E_BASH}
   fi
@@ -73,14 +74,18 @@ showDisclaimer() {
 # Test if system is supported
 cat /etc/issue | grep -E ${REQUIRED_SYSTEMS}  1>/dev/null 2>>${ERROR_LOG}
 if [ ! ${?} -eq 0 ]; then
+  echo ""
   echo "This is system is not a supported Ubuntu or Debian system."
+  echo ""
   exit ${E_UNSUPPORTED}
 fi
 
 # Setting Postgres User and changing configuration files require
 # root permissions.
 if [ "${USER}" != "${REQUIRED_USER}" ]; then
+  echo ""
   echo "This script requires root permissions to be executed."
+  echo ""
   exit ${E_BASH}
 fi
 
