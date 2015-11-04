@@ -225,8 +225,18 @@ setCredentials
 initializeOnmsDb
 restartOnms
 
-echo "OpenNMS should be up and running. You can access the WebUI on http://this-system:8980"
-echo "It is possible to login with the user admin and password admin"
+echo ""
+echo "Congratulations"
+echo "---------------"
+echo ""
+echo "OpenNMS is up and running. You can access the webapplication with"
+echo ""
+echo "http://this-systems-ip:8980"
+echo ""
+echo "Login with username admin and password admin"
 echo ""
 echo "Please change immediately the password for your admin user!"
+echo "Select in the main navigation \"Admin\" and go to \"Change Password\""
+echo ""
 echo "Thank you computing with us."
+echo ""
