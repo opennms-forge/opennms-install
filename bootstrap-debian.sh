@@ -101,12 +101,12 @@ installJava() {
 installOnmsRepo() {
   if [ ! -f /etc/apt/sources.list.d/opennms-${RELEASE}.list ]; then
     echo -n "Install OpenNMS Repository         ... "
-    printf "deb http://debian.opennms.org ${RELEASE} main\ndeb-src http://debian.opennms.org ${RELEASE} main" \
+    printf "deb http://debian.mirrors.opennms.org ${RELEASE} main\ndeb-src http://debian.mirrors.opennms.org ${RELEASE} main" \
            >> /etc/apt/sources.list.d/opennms-${RELEASE}.list
     checkError ${?}
 
     echo -n "Install OpenNMS Repository Key     ... "
-    wget -q -O - http://debian.opennms.org/OPENNMS-GPG-KEY | sudo apt-key add - 1>/dev/null 2>>${ERROR_LOG}
+    wget -q -O - http://debian.mirrors.opennms.org/OPENNMS-GPG-KEY | sudo apt-key add - 1>/dev/null 2>>${ERROR_LOG}
     checkError ${?}
   fi
 }
