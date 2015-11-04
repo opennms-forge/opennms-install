@@ -1,5 +1,5 @@
 #!/bin/bash -e
-# Script ot bootstrap a basic OpenNMS setup
+# Script to bootstrap a basic OpenNMS setup
 
 # Default build identifier set to snapshot
 RELEASE="stable"
