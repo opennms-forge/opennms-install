@@ -152,20 +152,22 @@ installOnmsApp() {
 # OpenNMS database.
 queryDbCredentials() {
   echo ""
-  echo "PostgreSQL credentials for OpenNMS"
+  echo -n "PostgreSQL credentials for OpenNMS"
   read -p "Enter username: " DB_USER
   read -s -p "Enter password: " DB_PASS
-  echo "PostgreSQL initialize                 ... "
+  echo ""
+  echo ""
+  echo -n "PostgreSQL initialize                 ... "
   postgresql-setup initdb 1>/dev/null 2>>${ERROR_LOG}
   checkError ${?}
-  echo "PostgreSQL auth from ident to md5     ... "
+  echo -n "PostgreSQL auth from ident to md5     ... "
   echo "host    all             all             127.0.0.1/32            md5" >> /var/lib/pgsql/data/pg_hba.conf
   echo "host    all             all             ::1/128                 md5" >> /var/lib/pgsql/data/pg_hba.conf
   checkError ${?}
-  echo "PostgreSQL systemd enable             ... "
+  echo -n "PostgreSQL systemd enable             ... "
   systemctl enable postgresql 1>/dev/null 2>>${ERROR_LOG}
   checkError ${?}
-  echo "Start PostgreSQL database             ... "
+  echo -n "Start PostgreSQL database             ... "
   systemctl start postgresql
   checkError ${?}
   sudo -u postgres psql -c "CREATE USER ${DB_USER} WITH PASSWORD '${DB_PASS}';" 1>/dev/null 2>>${ERROR_LOG}
