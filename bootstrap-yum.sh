@@ -148,6 +148,24 @@ installOnmsApp() {
 }
 
 ####
+# Helper script to initialize the PostgreSQL database
+initializePostgres() {
+  echo -n "PostgreSQL initialize                 ... "
+  postgresql-setup initdb 1>/dev/null 2>>${ERROR_LOG}
+  checkError ${?}
+  echo -n "PostgreSQL set auth from ident to md5 ... "
+  sed -i 's/all             127\.0\.0\.1\/32            ident/all             127.0.0.1\/32            md5/g' /var/lib/pgsql/data/pg_hba.conf
+  sed -i 's/all             ::1\/128                 ident/all             ::1\/128                 md5/g' /var/lib/pgsql/data/pg_hba.conf
+  checkError ${?}
+  echo -n "Start PostgreSQL database             ... "
+  systemctl start postgresql
+  checkError ${?}
+  echo -n "PostgreSQL systemd enable             ... "
+  systemctl enable postgresql 1>/dev/null 2>>${ERROR_LOG}
+  checkError ${?}
+}
+
+####
 # Helper to request Postgres credentials to initialize the
 # OpenNMS database.
 queryDbCredentials() {
@@ -157,20 +175,6 @@ queryDbCredentials() {
   read -s -p "Enter password: " DB_PASS
   echo ""
   echo ""
-  echo -n "PostgreSQL initialize                 ... "
-  postgresql-setup initdb 1>/dev/null 2>>${ERROR_LOG}
-  checkError ${?}
-  echo -n "PostgreSQL auth from ident to md5     ... "
-  sed -i 's/all             127\.0\.0\.1\/32            ident/all             127.0.0.1\/32            md5/g' /var/lib/pgsql/data/pg_hba.conf
-  sed -i 's/all             ::1\/128                 ident/all             ::1\/128                 md5/g' /var/lib/pgsql/data/pg_hba.conf
-  systemctl reload postgresql 1>/dev/null 2>>${ERROR_LOG}
-  checkError ${?}
-  echo -n "PostgreSQL systemd enable             ... "
-  systemctl enable postgresql 1>/dev/null 2>>${ERROR_LOG}
-  checkError ${?}
-  echo -n "Start PostgreSQL database             ... "
-  systemctl start postgresql
-  checkError ${?}
   sudo -u postgres psql -c "CREATE USER ${DB_USER} WITH PASSWORD '${DB_PASS}';" 1>/dev/null 2>>${ERROR_LOG}
   sudo -u postgres psql -c "CREATE DATABASE opennms;" 1>/dev/null 2>>${ERROR_LOG}
   sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE opennms to ${DB_USER};" 1>/dev/null 2>>${ERROR_LOG}
@@ -240,6 +244,7 @@ clear
 showDisclaimer
 installOnmsRepo
 installOnmsApp
+initializePostgres
 queryDbCredentials
 setCredentials
 initializeOnmsDb
