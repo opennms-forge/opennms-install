@@ -1,0 +1,53 @@
+= OpenNMS Install
+
+This script is a convenient bootstrap script to install OpenNMS on Debian or CentOS systems.
+The script executes the steps documented in link:http://docs.opennms.org/opennms/branches/develop/guide-install/guide-install.html#gi-basic-install-opennms[Basic Install] guide.
+
+The script is tested with:
+
+* Ubuntu 14.04.3 LTS 64bit
+* Debian Jessi 64bit
+* CentOS 7.1 64bit
+
+== Usage
+
+Download the script to your system.
+
+.Execute on CentOS system
+[source, bash]
+----
+sudo bash bootstrap-yum.sh
+----
+
+.Execute on Ubuntu or Debian system
+[source, bash]
+----
+sudo bash bootstrap-yum.sh
+----
+
+== Installing other releases
+
+It is possible to install different releases of OpenNMS.
+The script can set a parameter `-r` which overwrites the default release name `stable`.
+
+.Example installing snapshot on Ubuntu
+[source, bash]
+----
+sudo bash bootstrap-debian.sh -r snapshot
+----
+
+.Example installing from Business Service Monitor branch
+[source, bash]
+----
+sudo bash bootstrap-debian.sh -r branches/features-bsm
+----
+
+== Install from differen package mirror
+
+If you want to install from different package mirror, you can overwrite the default `{yum,debian}.mirrors.opennms.org` with your own server.
+
+.Example installing from OpenNMS server in EU
+[source, bash]
+----
+sudo bash bootstrap-debian.sh -m debian.opennms.eu
+----
