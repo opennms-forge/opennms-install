@@ -161,8 +161,9 @@ queryDbCredentials() {
   postgresql-setup initdb 1>/dev/null 2>>${ERROR_LOG}
   checkError ${?}
   echo -n "PostgreSQL auth from ident to md5     ... "
-  echo "host    all             all             127.0.0.1/32            md5" >> /var/lib/pgsql/data/pg_hba.conf
-  echo "host    all             all             ::1/128                 md5" >> /var/lib/pgsql/data/pg_hba.conf
+  sed -i 's/all             127\.0\.0\.1\/32            ident/all             127.0.0.1\/32            md5/g' /var/lib/pgsql/data/pg_hba.conf
+  sed -i 's/all             ::1\/128                 ident/all             ::1\/128                 md5/g' /var/lib/pgsql/data/pg_hba.conf
+  systemctl reload postgresql 1>/dev/null 2>>${ERROR_LOG}
   checkError ${?}
   echo -n "PostgreSQL systemd enable             ... "
   systemctl enable postgresql 1>/dev/null 2>>${ERROR_LOG}
