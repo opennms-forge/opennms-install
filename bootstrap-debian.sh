@@ -134,6 +134,9 @@ installOnmsRepo() {
     echo -n "Install OpenNMS Repository Key     ... "
     wget -q -O - http://${MIRROR}/OPENNMS-GPG-KEY | sudo apt-key add - 1>/dev/null 2>>${ERROR_LOG}
     checkError ${?}
+    echo -n "Update repository                  ... "
+    apt-get update 1>/dev/null 2>>${ERROR_LOG}
+    checkError ${?}
   else
     echo "SKIP - file opennms-${RELEASE}.list already exist"
   fi
@@ -142,9 +145,6 @@ installOnmsRepo() {
 ####
 # Install the OpenNMS application from Debian repository
 installOnmsApp() {
-  echo -n "Update repository                  ... "
-  apt-get update 1>/dev/null 2>>${ERROR_LOG}
-  checkError ${?}
   apt-get install -y opennms
   ${OPENNMS_HOME}/bin/runjava -s 1>/dev/null 2>>${ERROR_LOG}
   checkError ${?}
