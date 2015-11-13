@@ -132,7 +132,7 @@ installOnmsRepo() {
     checkError ${?}
 
     echo -n "Install OpenNMS Repository Key     ... "
-    wget -q -O - http://${MIRROR}/OPENNMS-GPG-KEY | sudo apt-key add - 1>/dev/null 2>>${ERROR_LOG}
+    wget -q -O - http://${MIRROR}/OPENNMS-GPG-KEY | sudo apt-key add -
     checkError ${?}
     
     echo -n "Update repository                  ... "
