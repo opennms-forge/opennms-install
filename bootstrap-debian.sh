@@ -134,7 +134,7 @@ installOnmsRepo() {
     echo -n "Install OpenNMS Repository Key     ... "
     wget -q -O - http://${MIRROR}/OPENNMS-GPG-KEY | sudo apt-key add -
     checkError ${?}
-    
+
     echo -n "Update repository                  ... "
     apt-get update 1>/dev/null 2>>${ERROR_LOG}
     checkError ${?}
@@ -144,12 +144,11 @@ installOnmsRepo() {
 }
 
 ####
-# Install the OpenNMS application from Debian repository
-installOnmsApp() {
-  apt-get install -y opennms
-  ${OPENNMS_HOME}/bin/runjava -s 1>/dev/null 2>>${ERROR_LOG}
+# Install the PostgreSQL database
+installPostgres() {
+  echo -n "Install PostgreSQL database        ... "
+  apt-get install -y postgresql 1>/dev/null 2>>${ERROR_LOG}
   checkError ${?}
-  clear
 }
 
 ####
@@ -161,8 +160,18 @@ queryDbCredentials() {
   read -p "Enter username: " DB_USER
   read -s -p "Enter password: " DB_PASS
   sudo -u postgres psql -c "CREATE USER ${DB_USER} WITH PASSWORD '${DB_PASS}';" 1>/dev/null 2>>${ERROR_LOG}
+  sudo -u postgres psql -c "ALTER USER ${DB_USER} WITH SUPERUSER;"  1>/dev/null 2>>${ERROR_LOG}
   sudo -u postgres psql -c "CREATE DATABASE opennms;" 1>/dev/null 2>>${ERROR_LOG}
   sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE opennms to ${DB_USER};" 1>/dev/null 2>>${ERROR_LOG}
+}
+
+####
+# Install the OpenNMS application from Debian repository
+installOnmsApp() {
+  apt-get install -y opennms
+  ${OPENNMS_HOME}/bin/runjava -s 1>/dev/null 2>>${ERROR_LOG}
+  checkError ${?}
+  clear
 }
 
 ####
@@ -225,8 +234,9 @@ restartOnms() {
 clear
 showDisclaimer
 installOnmsRepo
-installOnmsApp
+installPostgres
 queryDbCredentials
+installOnmsApp
 setCredentials
 initializeOnmsDb
 restartOnms
