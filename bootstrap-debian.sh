@@ -230,6 +230,15 @@ restartOnms() {
   checkError ${?}
 }
 
+lockdownDbUser() {
+  echo -n "PostgreSQL revoke super user role     ... "
+  sudo -u postgres psql -c "ALTER ROLE ${1} NOSUPERUSER;" 1>/dev/null 2>>${ERROR_LOG}
+  checkError ${?}
+  echo -n "PostgreSQL revoke create db role      ... "
+  sudo -u postgres psql -c "ALTER ROLE ${1} NOCREATEDB;" 1>/dev/null 2>>${ERROR_LOG}
+  checkError ${?}
+}
+
 # Execute setup procedure
 clear
 showDisclaimer
@@ -239,6 +248,7 @@ queryDbCredentials
 installOnmsApp
 setCredentials
 initializeOnmsDb
+lockdownDbUser ${DB_USER}
 restartOnms
 
 echo ""
