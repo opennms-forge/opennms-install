@@ -9,7 +9,7 @@ DB_PASS="opennms"
 OPENNMS_HOME="/usr/share/opennms"
 REQUIRED_USER="root"
 USER=$(whoami)
-MIRROR="debian.mirrors.opennms.org"
+MIRROR="debian.opennms.org"
 ANSWER="No"
 
 REQUIRED_SYSTEMS="Ubuntu|Debian"
@@ -27,9 +27,9 @@ usage() {
   echo "Bootstrap OpenNMS basic setup on Debian based system."
   echo ""
   echo "-r: Set a release: stable | testing | snapshot"
-  echo "    Default: ${RELEASE}"
+  echo "    Default: \"${RELEASE}\""
   echo "-m: Set alternative mirror server for packages"
-  echo "    Default: ${MIRROR}"
+  echo "    Default: \"${MIRROR}\""
   echo "-h: Show this help"
 }
 
@@ -72,8 +72,8 @@ showDisclaimer() {
 }
 
 # Test if system is supported
-cat ${RELEASE_FILE} | grep -E ${REQUIRED_SYSTEMS}  1>/dev/null 2>>${ERROR_LOG}
-if [ ! ${?} -eq 0 ]; then
+grep -E "${REQUIRED_SYSTEMS}" "${RELEASE_FILE}" 1>/dev/null 2>>${ERROR_LOG}
+if [ ! "${?}" -eq 0 ]; then
   echo ""
   echo "This is system is not a supported Ubuntu or Debian system."
   echo ""
@@ -93,7 +93,7 @@ fi
 # The -r option is optional and allows to set the release of OpenNMS.
 # The -m option allows to overwrite the package repository server.
 while getopts r:m:h flag; do
-  case ${flag} in
+  case "${flag}" in
     r)
         RELEASE="${OPTARG}"
         ;;
@@ -114,7 +114,7 @@ done
 ####
 # Helper function which tests if a command was successful or failed
 checkError() {
-  if [ $1 -eq 0 ]; then
+  if [ "$1" -eq 0 ]; then
     echo "OK"
   else
     echo "FAILED"
@@ -126,20 +126,20 @@ checkError() {
 # Install OpenNMS Debian repository for specific release
 installOnmsRepo() {
   echo -n "Install OpenNMS Repository         ... "
-  if [ ! -f /etc/apt/sources.list.d/opennms-${RELEASE}.list ]; then
-    printf "deb http://${MIRROR} ${RELEASE} main\ndeb-src http://${MIRROR} ${RELEASE} main" \
-           > /etc/apt/sources.list.d/opennms-${RELEASE}.list
+  if [ ! -f /etc/apt/sources.list.d/opennms-"${RELEASE}".list ]; then
+    printf 'deb http://%s %s main\ndeb-src http://%s %s main' "${MIRROR}" "${RELEASE}" "${MIRROR}" "${RELEASE}" \
+           > /etc/apt/sources.list.d/opennms-"${RELEASE}".list
     checkError ${?}
 
     echo -n "Install OpenNMS Repository Key     ... "
-    wget -q -O - http://${MIRROR}/OPENNMS-GPG-KEY | sudo apt-key add -
+    wget -q -O - http://"${MIRROR}"/OPENNMS-GPG-KEY | sudo apt-key add -
     checkError ${?}
 
     echo -n "Update repository                  ... "
     apt-get update 1>/dev/null 2>>${ERROR_LOG}
     checkError ${?}
   else
-    echo "SKIP - file opennms-${RELEASE}.list already exist"
+    echo "SKIP - file opennms-\"${RELEASE}\".list already exist"
   fi
 }
 
@@ -159,17 +159,19 @@ queryDbCredentials() {
   echo "PostgreSQL credentials for OpenNMS"
   read -p "Enter username: " DB_USER
   read -s -p "Enter password: " DB_PASS
-  sudo -u postgres psql -c "CREATE USER ${DB_USER} WITH PASSWORD '${DB_PASS}';" 1>/dev/null 2>>${ERROR_LOG}
-  sudo -u postgres psql -c "ALTER USER ${DB_USER} WITH SUPERUSER;"  1>/dev/null 2>>${ERROR_LOG}
-  sudo -u postgres psql -c "CREATE DATABASE opennms;" 1>/dev/null 2>>${ERROR_LOG}
-  sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE opennms to ${DB_USER};" 1>/dev/null 2>>${ERROR_LOG}
+  {
+    sudo -u postgres psql -c "CREATE USER \"${DB_USER}\" WITH PASSWORD '\"${DB_PASS}\"';"
+    sudo -u postgres psql -c "ALTER USER \"${DB_USER}\" WITH SUPERUSER;"
+    sudo -u postgres psql -c "CREATE DATABASE opennms;"
+    sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE opennms to \"${DB_USER}\";"
+  } 1>/dev/null 2>>${ERROR_LOG}
 }
 
 ####
 # Install the OpenNMS application from Debian repository
 installOnmsApp() {
   apt-get install -y opennms
-  ${OPENNMS_HOME}/bin/runjava -s 1>/dev/null 2>>${ERROR_LOG}
+  "${OPENNMS_HOME}"/bin/runjava -s 1>/dev/null 2>>${ERROR_LOG}
   checkError ${?}
   clear
 }
@@ -180,7 +182,7 @@ installOnmsApp() {
 setCredentials() {
   echo ""
   echo -n "Generate OpenNMS data source config   ... "
-  if [ -f "${OPENNMS_HOME}/etc/opennms-datasources.xml" ]; then
+  if [ -f "\"${OPENNMS_HOME}\"/etc/opennms-datasources.xml" ]; then
     printf '<?xml version="1.0" encoding="UTF-8"?>
 <datasource-configuration>
   <connection-pool factory="org.opennms.core.db.C3P0ConnectionFactory"
@@ -203,11 +205,11 @@ setCredentials() {
                     url="jdbc:postgresql://localhost:5432/template1"
                     user-name="%s"
                     password="%s" />
-</datasource-configuration>' ${DB_USER} ${DB_PASS} ${DB_USER} ${DB_PASS} \
-  > ${OPENNMS_HOME}/etc/opennms-datasources.xml
+</datasource-configuration>' "${DB_USER}" "${DB_PASS}" "${DB_USER}" "${DB_PASS}" \
+  > "${OPENNMS_HOME}"/etc/opennms-datasources.xml
   checkError ${?}
   else
-    echo "No OpenNMS configuration found in ${OPENNMS_HOME}/etc"
+    echo "No OpenNMS configuration found in \"${OPENNMS_HOME}\"/etc"
     exit ${E_ILLEGAL_ARGS}
   fi
 }
@@ -216,8 +218,8 @@ setCredentials() {
 # Initialize the OpenNMS database schema
 initializeOnmsDb() {
   echo -n "Initialize OpenNMS                    ... "
-  if [ ! -f $OPENNMS_HOME/etc/configured ]; then
-    ${OPENNMS_HOME}/bin/install -dis 1>/dev/null 2>>${ERROR_LOG}
+  if [ ! -f "$OPENNMS_HOME"/etc/configured ]; then
+    "${OPENNMS_HOME}"/bin/install -dis 1>/dev/null 2>>${ERROR_LOG}
     checkError ${?}
   else
     echo "SKIP - already configured"
@@ -232,10 +234,10 @@ restartOnms() {
 
 lockdownDbUser() {
   echo -n "PostgreSQL revoke super user role     ... "
-  sudo -u postgres psql -c "ALTER ROLE ${1} NOSUPERUSER;" 1>/dev/null 2>>${ERROR_LOG}
+  sudo -u postgres psql -c "ALTER ROLE \"${1}\" NOSUPERUSER;" 1>/dev/null 2>>${ERROR_LOG}
   checkError ${?}
   echo -n "PostgreSQL revoke create db role      ... "
-  sudo -u postgres psql -c "ALTER ROLE ${1} NOCREATEDB;" 1>/dev/null 2>>${ERROR_LOG}
+  sudo -u postgres psql -c "ALTER ROLE \"${1}\" NOCREATEDB;" 1>/dev/null 2>>${ERROR_LOG}
   checkError ${?}
 }
 
@@ -248,7 +250,7 @@ queryDbCredentials
 installOnmsApp
 setCredentials
 initializeOnmsDb
-lockdownDbUser ${DB_USER}
+lockdownDbUser "${DB_USER}"
 restartOnms
 
 echo ""
