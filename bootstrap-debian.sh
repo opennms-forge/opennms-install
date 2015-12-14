@@ -139,7 +139,7 @@ installOnmsRepo() {
     apt-get update 1>/dev/null 2>>${ERROR_LOG}
     checkError ${?}
   else
-    echo "SKIP - file opennms-\"${RELEASE}\".list already exist"
+    echo "SKIP - file opennms-${RELEASE}.list already exist"
   fi
 }
 
@@ -160,10 +160,10 @@ queryDbCredentials() {
   read -p "Enter username: " DB_USER
   read -s -p "Enter password: " DB_PASS
   {
-    sudo -u postgres psql -c "CREATE USER \"${DB_USER}\" WITH PASSWORD '\"${DB_PASS}\"';"
-    sudo -u postgres psql -c "ALTER USER \"${DB_USER}\" WITH SUPERUSER;"
+    sudo -u postgres psql -c "CREATE USER '${DB_USER}' WITH PASSWORD '${DB_PASS}';"
+    sudo -u postgres psql -c "ALTER USER '${DB_USER}' WITH SUPERUSER;"
     sudo -u postgres psql -c "CREATE DATABASE opennms;"
-    sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE opennms to \"${DB_USER}\";"
+    sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE opennms to '${DB_USER}';"
   } 1>/dev/null 2>>${ERROR_LOG}
 }
 
@@ -171,7 +171,7 @@ queryDbCredentials() {
 # Install the OpenNMS application from Debian repository
 installOnmsApp() {
   apt-get install -y opennms
-  "${OPENNMS_HOME}"/bin/runjava -s 1>/dev/null 2>>${ERROR_LOG}
+  ${OPENNMS_HOME}/bin/runjava -s 1>/dev/null 2>>${ERROR_LOG}
   checkError ${?}
   clear
 }
@@ -182,7 +182,7 @@ installOnmsApp() {
 setCredentials() {
   echo ""
   echo -n "Generate OpenNMS data source config   ... "
-  if [ -f "\"${OPENNMS_HOME}\"/etc/opennms-datasources.xml" ]; then
+  if [ -f "${OPENNMS_HOME}/etc/opennms-datasources.xml" ]; then
     printf '<?xml version="1.0" encoding="UTF-8"?>
 <datasource-configuration>
   <connection-pool factory="org.opennms.core.db.C3P0ConnectionFactory"
@@ -206,10 +206,10 @@ setCredentials() {
                     user-name="%s"
                     password="%s" />
 </datasource-configuration>' "${DB_USER}" "${DB_PASS}" "${DB_USER}" "${DB_PASS}" \
-  > "${OPENNMS_HOME}"/etc/opennms-datasources.xml
+  > "${OPENNMS_HOME}/etc/opennms-datasources.xml"
   checkError ${?}
   else
-    echo "No OpenNMS configuration found in \"${OPENNMS_HOME}\"/etc"
+    echo "No OpenNMS configuration found in ${OPENNMS_HOME}/etc"
     exit ${E_ILLEGAL_ARGS}
   fi
 }
@@ -218,8 +218,8 @@ setCredentials() {
 # Initialize the OpenNMS database schema
 initializeOnmsDb() {
   echo -n "Initialize OpenNMS                    ... "
-  if [ ! -f "$OPENNMS_HOME"/etc/configured ]; then
-    "${OPENNMS_HOME}"/bin/install -dis 1>/dev/null 2>>${ERROR_LOG}
+  if [ ! -f "$OPENNMS_HOME/etc/configured" ]; then
+    "${OPENNMS_HOME}/bin/install -dis" 1>/dev/null 2>>${ERROR_LOG}
     checkError ${?}
   else
     echo "SKIP - already configured"
