@@ -160,10 +160,10 @@ queryDbCredentials() {
   read -p "Enter username: " DB_USER
   read -s -p "Enter password: " DB_PASS
   {
-    sudo -u postgres psql -c "CREATE USER '${DB_USER}' WITH PASSWORD '${DB_PASS}';"
-    sudo -u postgres psql -c "ALTER USER '${DB_USER}' WITH SUPERUSER;"
+    sudo -u postgres psql -c "CREATE USER ${DB_USER} WITH PASSWORD '${DB_PASS}';"
+    sudo -u postgres psql -c "ALTER USER ${DB_USER} WITH SUPERUSER;"
     sudo -u postgres psql -c "CREATE DATABASE opennms;"
-    sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE opennms to '${DB_USER}';"
+    sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE opennms to ${DB_USER};"
   } 1>/dev/null 2>>${ERROR_LOG}
 }
 
@@ -219,7 +219,7 @@ setCredentials() {
 initializeOnmsDb() {
   echo -n "Initialize OpenNMS                    ... "
   if [ ! -f "$OPENNMS_HOME/etc/configured" ]; then
-    "${OPENNMS_HOME}/bin/install -dis" 1>/dev/null 2>>${ERROR_LOG}
+    ${OPENNMS_HOME}/bin/install -dis 1>/dev/null 2>>${ERROR_LOG}
     checkError ${?}
   else
     echo "SKIP - already configured"
