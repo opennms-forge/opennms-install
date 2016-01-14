@@ -9,7 +9,7 @@ DB_PASS="opennms"
 OPENNMS_HOME="/opt/opennms"
 REQUIRED_USER="root"
 USER=$(whoami)
-MIRROR="yum.mirrors.opennms.org"
+MIRROR="yum.opennms.org"
 ANSWER="No"
 
 REQUIRED_SYSTEMS="CentOS|Red\sHat"
@@ -132,7 +132,7 @@ installOnmsRepo() {
 
     echo -n "Install OpenNMS Repository Key     ... "
     rpm --import http://${MIRROR}/OPENNMS-GPG-KEY 1 >/dev/null 2>>${ERROR_LOG}
-    # checkError ${?}
+    checkError ${?}
   else
     echo "SKIP - file opennms-repo-${RELEASE}-rhel7.repo already exist"
   fi
