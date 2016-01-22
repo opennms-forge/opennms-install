@@ -131,7 +131,7 @@ installOnmsRepo() {
     checkError ${?}
 
     echo -n "Install OpenNMS Repository Key     ... "
-    rpm --import http://${MIRROR}/OPENNMS-GPG-KEY 1 >/dev/null 2>>${ERROR_LOG}
+    rpm --import http://${MIRROR}/OPENNMS-GPG-KEY 2>>${ERROR_LOG}
     checkError ${?}
   else
     echo "SKIP - file opennms-repo-${RELEASE}-rhel7.repo already exist"
