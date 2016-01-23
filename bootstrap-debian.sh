@@ -152,6 +152,17 @@ installPostgres() {
 }
 
 ####
+# Helper script to initialize the PostgreSQL database
+initializePostgres() {
+  echo -n "PostgreSQL initialize              ... "
+  pg_createcluster 9.3 main --start 1>/dev/null 2>>${ERROR_LOG}
+  checkError ${?}
+  echo -n "Start PostgreSQL database          ... "
+  service postgresql start 1>/dev/null 2>>${ERROR_LOG}
+  checkError ${?}
+}
+
+####
 # Helper to request Postgres credentials to initialize the
 # OpenNMS database.
 queryDbCredentials() {
@@ -247,6 +258,7 @@ installOnmsRepo
 installPostgres
 queryDbCredentials
 installOnmsApp
+initializePostgres
 setCredentials
 initializeOnmsDb
 lockdownDbUser "${DB_USER}"
