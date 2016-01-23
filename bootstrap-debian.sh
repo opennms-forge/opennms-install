@@ -156,7 +156,7 @@ installPostgres() {
 # OpenNMS database.
 queryDbCredentials() {
   echo ""
-  read -p    "Enter database username: " DB_USER
+  read -p "Enter database username: " DB_USER
   read -s -p "Enter database password: " DB_PASS
   {
     sudo -u postgres psql -c "CREATE USER ${DB_USER} WITH PASSWORD '${DB_PASS}';"
