@@ -170,9 +170,8 @@ initializePostgres() {
 # OpenNMS database.
 queryDbCredentials() {
   echo ""
-  echo -n "PostgreSQL credentials for OpenNMS"
-  read -p "Enter username: " DB_USER
-  read -s -p "Enter password: " DB_PASS
+  read -p "Enter database username: " DB_USER
+  read -s -p "Enter database password: " DB_PASS
   echo ""
   echo ""
   sudo -u postgres psql -c "CREATE USER ${DB_USER} WITH PASSWORD '${DB_PASS}';" 1>/dev/null 2>>${ERROR_LOG}
