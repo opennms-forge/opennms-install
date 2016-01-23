@@ -256,9 +256,9 @@ clear
 showDisclaimer
 installOnmsRepo
 installPostgres
+initializePostgres
 queryDbCredentials
 installOnmsApp
-initializePostgres
 setCredentials
 initializeOnmsDb
 lockdownDbUser "${DB_USER}"
