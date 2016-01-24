@@ -149,13 +149,14 @@ installPostgres() {
   echo -n "Install PostgreSQL database        ... "
   apt-get install -y postgresql 1>/dev/null 2>>${ERROR_LOG}
   checkError ${?}
+  export PSQL_VERSION=$(psql --version | grep -Po '([0-9]+\.[0-9]+)')
 }
 
 ####
 # Helper script to initialize the PostgreSQL database
 initializePostgres() {
   echo -n "PostgreSQL initialize              ... "
-  pg_createcluster 9.3 main --start 1>/dev/null 2>>${ERROR_LOG}
+  pg_createcluster ${PSQL_VERSION} main --start 1>/dev/null 2>>${ERROR_LOG}
   checkError ${?}
   echo -n "Start PostgreSQL database          ... "
   service postgresql start 1>/dev/null 2>>${ERROR_LOG}
@@ -237,6 +238,7 @@ initializeOnmsDb() {
 }
 
 restartOnms() {
+  printf 'START_TIMEOUT=0' > "${OPENNMS_HOME}/etc/opennms.conf"
   echo -n "Starting OpenNMS                      ... "
   service opennms restart 1>/dev/null 2>>${ERROR_LOG}
   checkError ${?}
