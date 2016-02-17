@@ -42,7 +42,7 @@ sudo bash bootstrap-debian.sh -r snapshot
 sudo bash bootstrap-debian.sh -r branches/features-bsm
 ----
 
-== Install from differen package mirror
+== Install from different package mirror
 
 If you want to install from different package mirror, you can overwrite the default `{yum,debian}.mirrors.opennms.org` with your own server.
 
