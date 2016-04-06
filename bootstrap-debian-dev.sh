@@ -203,7 +203,6 @@ installTools() {
 
 # Execute setup procedure
 clear
-showDisclaimer
 installOnmsRepo
 installOracleJdk
 installPostgres
