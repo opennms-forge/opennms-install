@@ -201,28 +201,30 @@ installTools() {
   checkError ${?}
 }
 
+cloneCode() {
+  git clone https://github.com/OpenNMS/opennms.git ~/dev/opennms
+}
+
 # Execute setup procedure
 clear
 installOnmsRepo
 installOracleJdk
 installPostgres
 installTools
+cloneCode
 
 echo ""
 echo "Congratulations"
 echo "---------------"
 echo ""
 echo "Your system is prepared to develop with OpenNMS."
-echo "Get the source code from, e.g."
-echo ""
-echo "git clone https://github.com/OpenNMS/opennms.git ~/dev/opennms"
 echo ""
 echo "Compile and assemble OpenNMS in this example:"
 echo ""
 echo "cd  ~/dev/opennms:"
 echo "./clean.pl"
-echo "./compile.pl -DskipTests"
-echo "./assemble -p dir"
+echo "./compile.pl -DskipTests -DskipTestsITs"
+echo "./assemble.pl -DskipTests -DskipTestsITs -p dir"
 echo ""
 echo "Thank you computing with us."
 echo ""
