@@ -140,6 +140,10 @@ installOnmsRepo() {
 }
 
 installOracleJdk() {
+  echo debconf shared/accepted-oracle-license-v1-1 select true | debconf-set-selections
+  echo debconf shared/accepted-oracle-license-v1-1 seen true | /usr/bin/debconf-set-selections
+  echo "opennmsdb opennms-db/noinstall string ok" | debconf-set-selections
+
   echo -n "Install Oracle Java Repository     ... "
   add-apt-repository -y ppa:webupd8team/java 1>/dev/null 2>>${ERROR_LOG}
   checkError ${?}
@@ -176,7 +180,7 @@ installPostgres() {
 # Install required tools
 installTools() {
   echo ""
-  echo -n "Install software-propertes-common  ... "
+  echo -n "Install software-properties-common  ... "
   apt-get install -y software-properties-common 1>/dev/null 2>>${ERROR_LOG}
   checkError ${?}
 
@@ -186,10 +190,6 @@ installTools() {
 
   echo -n "Install nsis                       ... "
   apt-get install -y nsis 1>/dev/null 2>>${ERROR_LOG}
-  checkError ${?}
-
-  echo -n "Install maven                      ... "
-  apt-get install -y maven 1>/dev/null 2>>${ERROR_LOG}
   checkError ${?}
 
   echo -n "Install jicmp                      ... "
