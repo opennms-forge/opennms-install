@@ -155,9 +155,6 @@ installPostgres() {
 ####
 # Helper script to initialize the PostgreSQL database
 initializePostgres() {
-  echo -n "PostgreSQL initialize              ... "
-  pg_createcluster ${PSQL_VERSION} main --start 1>/dev/null 2>>${ERROR_LOG}
-  checkError ${?}
   echo -n "Start PostgreSQL database          ... "
   service postgresql start 1>/dev/null 2>>${ERROR_LOG}
   checkError ${?}
@@ -281,3 +278,4 @@ echo "Select in the main navigation \"Admin\" and go to \"Change Password\""
 echo ""
 echo "Thank you computing with us."
 echo ""
+
