@@ -126,9 +126,9 @@ checkError() {
 # Install OpenNMS Debian repository for specific release
 installOnmsRepo() {
   echo -n "Install OpenNMS Repository         ... "
-  if [ ! -f /etc/apt/sources.list.d/opennms-"${RELEASE}".list ]; then
+  if [ ! -f /etc/apt/sources.list.d/opennms.list ]; then
     printf 'deb http://%s %s main\ndeb-src http://%s %s main' "${MIRROR}" "${RELEASE}" "${MIRROR}" "${RELEASE}" \
-           > /etc/apt/sources.list.d/opennms-"${RELEASE}".list
+           > /etc/apt/sources.list.d/opennms.list
     checkError ${?}
 
     echo -n "Install OpenNMS Repository Key     ... "
@@ -139,7 +139,7 @@ installOnmsRepo() {
     apt-get update 1>/dev/null 2>>${ERROR_LOG}
     checkError ${?}
   else
-    echo "SKIP - file opennms-${RELEASE}.list already exist"
+    echo "SKIP - file opennms.list already exist"
   fi
 }
 
