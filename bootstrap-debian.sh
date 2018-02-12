@@ -47,8 +47,15 @@ showDisclaimer() {
   echo " - Initialize and bootstrapping the database"
   echo " - Start OpenNMS"
   echo ""
-  echo "If you have OpenNMS already installed, don't use this"
-  echo "script!"
+  echo "If you have OpenNMS already installed, don't use this script!"
+  echo ""
+  echo "If you get any errors during the install procedure please visit the"
+  echo "bootstrap.log where you can find detailed error messages for"
+  echo "diagnose and bug reporting."
+  echo ""
+  echo "Bugs or enhancements can be reported here:"
+  echo ""
+  echo " - https://github.com/opennms-forge/opennms-install/issues -"
   echo ""
   read -p "If you want to proceed, type YES: " ANSWER
 
