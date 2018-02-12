@@ -33,6 +33,37 @@ usage() {
   echo "-h: Show this help"
 }
 
+checkRequirements() {
+  # Test if system is supported
+  cat ${RELEASE_FILE} | grep -E ${REQUIRED_SYSTEMS}  1>/dev/null 2>>${ERROR_LOG}
+  if [ ! ${?} -eq 0 ]; then
+    echo ""
+    echo "This is system is not a supported CentOS or Red Hat."
+    echo ""
+    exit ${E_UNSUPPORTED}
+  fi
+
+  # Setting Postgres User and changing configuration files require
+  # root permissions.
+  if [ "${USER}" != "${REQUIRED_USER}" ]; then
+    echo ""
+    echo "This script requires root permissions to be executed."
+    echo ""
+    exit ${E_BASH}
+  fi
+
+  # The sudo command is required to switch to postgres user for DB setup
+  echo -n "Path to sudo: ">>${ERROR_LOG}
+  which sudo 1>>${ERROR_LOG} 2>>${ERROR_LOG}
+  if [ ! "${?}" -eq "0" ]; then
+    echo ""
+    echo "This script requires sudo which could not be found."
+    echo "Please install the sudo package."
+    echo ""
+    exit ${E_BASH}
+  fi
+}
+
 showDisclaimer() {
   echo ""
   echo "This script installs OpenNMS on  your system. It will"
@@ -77,24 +108,6 @@ showDisclaimer() {
   # Set case sensitive
   shopt -u nocasematch
 }
-
-# Test if system is supported
-cat ${RELEASE_FILE} | grep -E ${REQUIRED_SYSTEMS}  1>/dev/null 2>>${ERROR_LOG}
-if [ ! ${?} -eq 0 ]; then
-  echo ""
-  echo "This is system is not a supported CentOS or Red Hat."
-  echo ""
-  exit ${E_UNSUPPORTED}
-fi
-
-# Setting Postgres User and changing configuration files require
-# root permissions.
-if [ "${USER}" != "${REQUIRED_USER}" ]; then
-  echo ""
-  echo "This script requires root permissions to be executed."
-  echo ""
-  exit ${E_BASH}
-fi
 
 ####
 # The -r option is optional and allows to set the release of OpenNMS.
@@ -247,6 +260,7 @@ restartOnms() {
 
 # Execute setup procedure
 clear
+checkRequirements
 showDisclaimer
 installOnmsRepo
 installOnmsApp
