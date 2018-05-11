@@ -13,7 +13,6 @@ MIRROR="debian.mirrors.opennms.org"
 ANSWER="No"
 
 REQUIRED_SYSTEMS="Ubuntu|Debian"
-RELEASE_FILE="/etc/issue"
 
 # Error codes
 E_ILLEGAL_ARGS=126
@@ -68,7 +67,7 @@ showDisclaimer() {
 }
 
 # Test if system is supported
-cat ${RELEASE_FILE} | grep -E ${REQUIRED_SYSTEMS}  1>/dev/null 2>>${ERROR_LOG}
+uname -a | grep -E ${REQUIRED_SYSTEMS}  1>/dev/null 2>>${ERROR_LOG}
 if [ ! ${?} -eq 0 ]; then
   echo ""
   echo "This is system is not a supported Ubuntu or Debian system."
