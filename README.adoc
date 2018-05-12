@@ -5,9 +5,9 @@ The script executes the steps documented in link:http://docs.opennms.org/opennms
 
 The script is tested with:
 
-* Ubuntu 16.04 (Xenial Xerus) LTS 64bit
-* Debian 8 (Jessie) 64bit
-* CentOS 7.1 64bit
+* Ubuntu 18.04 (Bionic Beaver) 64bit
+* Debian 9 (Stretch) 64bit
+* CentOS 7.5.1804 64bit
 
 == Usage
 
