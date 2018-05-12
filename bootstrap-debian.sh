@@ -256,7 +256,10 @@ initializeOnmsDb() {
 restartOnms() {
   printf 'START_TIMEOUT=0' > "${OPENNMS_HOME}/etc/opennms.conf"
   echo -n "Starting OpenNMS                      ... "
-  service opennms restart 1>/dev/null 2>>${ERROR_LOG}
+  systemctl start opennms 1>/dev/null 2>>${ERROR_LOG}
+  checkError ${?}
+  echo -n "OpenNMS systemd enable                ... "
+  systemctl enable opennms 1>/dev/null 2>>${ERROR_LOG}
   checkError ${?}
 }
 
