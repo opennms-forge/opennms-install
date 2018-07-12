@@ -34,8 +34,12 @@ usage() {
 
 checkRequirements() {
   # Test if system is supported
-  uname -a | grep -E "${REQUIRED_SYSTEMS}"  1>/dev/null 2>>"${ERROR_LOG}"
-  if [ ! "${?}" -eq 0 ]; then
+  DISTRO_CHECK="$(command -v lsb_release)"
+  if [ -z "$DISTRO_CHECK" ]; then
+    DISTRO_CHECK="$(command -v uname)"
+  fi
+  "$DISTRO_CHECK" -a | grep -E "${REQUIRED_SYSTEMS}"  1>/dev/null 2>>"${ERROR_LOG}"
+  if [ ! "${?}" -eq 0 ] && [ ! -e /etc/debian_version ]; then
     echo ""
     echo "This is system is not a supported Ubuntu or Debian system."
     echo ""
