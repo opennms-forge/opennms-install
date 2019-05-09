@@ -13,6 +13,7 @@ MIRROR="yum.opennms.org"
 ANSWER="No"
 
 REQUIRED_SYSTEMS="CentOS|Red\sHat"
+REQUIRED_JDK="java-11-openjdk-devel"
 RELEASE_FILE="/etc/redhat-release"
 
 # Error codes
@@ -36,7 +37,7 @@ usage() {
 checkRequirements() {
   # Test if system is supported
   cat ${RELEASE_FILE} | grep -E ${REQUIRED_SYSTEMS}  1>/dev/null 2>>${ERROR_LOG}
-  if [ ! ${?} -eq 0 ]; then
+  if [[ ! ${?} -eq 0 ]]; then
     echo ""
     echo "This is system is not a supported CentOS or Red Hat."
     echo ""
@@ -45,7 +46,7 @@ checkRequirements() {
 
   # Setting Postgres User and changing configuration files require
   # root permissions.
-  if [ "${USER}" != "${REQUIRED_USER}" ]; then
+  if [[ "${USER}" != "${REQUIRED_USER}" ]]; then
     echo ""
     echo "This script requires root permissions to be executed."
     echo ""
@@ -53,12 +54,29 @@ checkRequirements() {
   fi
 
   # The sudo command is required to switch to postgres user for DB setup
-  echo -n "Path to sudo: ">>${ERROR_LOG}
-  which sudo 1>>${ERROR_LOG} 2>>${ERROR_LOG}
-  if [ ! "${?}" -eq "0" ]; then
+  command -v sudo 1>>${ERROR_LOG} 2>>${ERROR_LOG}
+  if [[ ! "${?}" -eq "0" ]]; then
     echo ""
     echo "This script requires sudo which could not be found."
     echo "Please install the sudo package."
+    echo ""
+    exit ${E_BASH}
+  fi
+
+  # Test if a OpenJDK 11 Development Kit is installed
+  yum list installed | grep "${REQUIRED_JDK}" 1>/dev/null
+  if [[ ! "${?}" -eq "0" ]]; then
+    echo ""
+    echo "OpenNMS Horizon requires OpenJDK 11 Development Kit which is not"
+    echo "available on your system. Please install OpenJDK 11 Development"
+    echo "with:"
+    echo ""
+    echo "    yum install java-11-openjdk-devel"
+    echo ""
+    echo "Setup your system to use OpenJDK 11 JDK as your default."
+    echo "Hints how to setup your Java Environment can be found here:"
+    echo ""
+    echo " - https://tinyurl.com/y4llkagl"
     echo ""
     exit ${E_BASH}
   fi
@@ -66,16 +84,13 @@ checkRequirements() {
 
 showDisclaimer() {
   echo ""
-  echo "This script installs OpenNMS on  your system. It will"
-  echo "install  all  components necessary  to  run  OpenNMS."
+  echo "This script installsOpenNMS on your system with the following."
+  echo "components:"
   echo ""
-  echo "The following components will be installed:"
-  echo ""
-  echo " - Oracle Java 8 JDK"
   echo " - PostgreSQL Server"
   echo " - OpenNMS Repositories"
-  echo " - OpenNMS with core services and Webapplication"
-  echo " - Initialize and bootstrapping the database"
+  echo " - OpenNMS with core services and web application"
+  echo " - Initializing and bootstrapping the database schema"
   echo " - Start OpenNMS"
   echo ""
   echo "If you have OpenNMS already installed, don't use this script!"
@@ -137,7 +152,7 @@ checkError() {
   if [ $1 -eq 0 ]; then
     echo "OK"
   else
-    echo "FAILED"
+    echo "FAILED - Please check the bootstrap.log file for detailed error messages."
     exit ${E_BASH}
   fi
 }
@@ -190,8 +205,10 @@ initializePostgres() {
 # OpenNMS database.
 queryDbCredentials() {
   echo ""
-  read -p "Enter database username: " DB_USER
-  read -s -p "Enter database password: " DB_PASS
+  echo "Create credentials for the OpenNMS Horizon database"
+  echo ""
+  read -r -p "Create a username for the database :" DB_USER
+  read -r -s -p "Set a password for database user   :" DB_PASS
   echo ""
   echo ""
   sudo -u postgres psql -c "CREATE USER ${DB_USER} WITH PASSWORD '${DB_PASS}';" 1>/dev/null 2>>${ERROR_LOG}
