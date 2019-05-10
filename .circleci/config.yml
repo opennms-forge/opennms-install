@@ -1,17 +1,13 @@
-version: 2.0
+version: 2.1
 
-defaults: &defaults
-
-aliases:
-  - &docker_environment
-    - image: docker:18.06.0-ce-git
-  - &checkout
-    path: ~/opennms-install
+executors:
+  shellcheck-executor:
+    docker:
+      - image: opennms/shellcheck:0.5.0-b3
 
 jobs:
-  shellcheck:
-    docker:
-      - image: no42org/shellcheck:0.5.0
+  code-check:
+    executor: shellcheck-executor
     steps:
       - checkout
       - run:
@@ -21,7 +17,6 @@ jobs:
             find . -type f -name '*.sh' | xargs shellcheck --external-sources -e SC2129,SC2001,SC2013
 
 workflows:
-  version: 2
   test:
     jobs:
-      - shellcheck
+      - code-check

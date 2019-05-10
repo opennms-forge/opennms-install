@@ -1,7 +1,8 @@
-#!/bin/bash -e
+#!/usr/bin/env bash
+#
 # Script to bootstrap a basic OpenNMS setup
 
-# Default build identifier set to snapshot
+# Default build identifier set to stable
 RELEASE="stable"
 ERROR_LOG="bootstrap.log"
 DB_USER="opennms"
@@ -12,7 +13,7 @@ USER=$(whoami)
 MIRROR="yum.opennms.org"
 ANSWER="No"
 
-REQUIRED_SYSTEMS="CentOS|Red\sHat"
+REQUIRED_SYSTEMS="CentOS|Red\\sHat"
 REQUIRED_JDK="java-11-openjdk-devel"
 RELEASE_FILE="/etc/redhat-release"
 
@@ -36,12 +37,11 @@ usage() {
 
 checkRequirements() {
   # Test if system is supported
-  cat ${RELEASE_FILE} | grep -E ${REQUIRED_SYSTEMS}  1>/dev/null 2>>${ERROR_LOG}
-  if [[ ! ${?} -eq 0 ]]; then
+  if ! grep -E "${REQUIRED_SYSTEMS}" "${RELEASE_FILE}" 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"; then
     echo ""
     echo "This is system is not a supported CentOS or Red Hat."
     echo ""
-    exit ${E_UNSUPPORTED}
+    exit "${E_UNSUPPORTED}"
   fi
 
   # Setting Postgres User and changing configuration files require
@@ -50,35 +50,32 @@ checkRequirements() {
     echo ""
     echo "This script requires root permissions to be executed."
     echo ""
-    exit ${E_BASH}
+    exit "${E_BASH}"
   fi
 
   # The sudo command is required to switch to postgres user for DB setup
-  command -v sudo 1>>${ERROR_LOG} 2>>${ERROR_LOG}
-  if [[ ! "${?}" -eq "0" ]]; then
+  if ! command -v sudo 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"; then
     echo ""
     echo "This script requires sudo which could not be found."
     echo "Please install the sudo package."
     echo ""
-    exit ${E_BASH}
+    exit "${E_BASH}"
   fi
 
   # Test if a OpenJDK 11 Development Kit is installed
-  yum list installed | grep "${REQUIRED_JDK}" 1>/dev/null
-  if [[ ! "${?}" -eq "0" ]]; then
+  if ! yum list installed | grep "${REQUIRED_JDK}" 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"; then
     echo ""
     echo "OpenNMS Horizon requires OpenJDK 11 Development Kit which is not"
     echo "available on your system. Please install OpenJDK 11 Development"
     echo "with:"
     echo ""
-    echo "    yum install java-11-openjdk-devel"
+    echo "    yum install ${REQUIRED_JDK}"
     echo ""
-    echo "Setup your system to use OpenJDK 11 JDK as your default."
-    echo "Hints how to setup your Java Environment can be found here:"
+    echo "Setup your system to use OpenJDK 11 JDK as your default and run the"
+    echo "installer again. Hints how to setup your Java Environment can be"
+    echo "found here: https://tinyurl.com/y4llkagl"
     echo ""
-    echo " - https://tinyurl.com/y4llkagl"
-    echo ""
-    exit ${E_BASH}
+    exit "${E_BASH}"
   fi
 }
 
@@ -103,7 +100,7 @@ showDisclaimer() {
   echo ""
   echo " - https://github.com/opennms-forge/opennms-install/issues -"
   echo ""
-  read -p "If you want to proceed, type YES: " ANSWER
+  read -r -p "If you want to proceed, type YES: " ANSWER
 
   # Set bash to case insensitive
   shopt -s nocasematch
@@ -117,7 +114,7 @@ showDisclaimer() {
     echo "Your system is unchanged."
     echo "Thank you computing with us"
     echo ""
-    exit ${E_BASH}
+    exit "${E_BASH}"
   fi
 
   # Set case sensitive
@@ -128,7 +125,7 @@ showDisclaimer() {
 # The -r option is optional and allows to set the release of OpenNMS.
 # The -m option allows to overwrite the package repository server.
 while getopts r:m:h flag; do
-  case ${flag} in
+  case "${flag}" in
     r)
         RELEASE="${OPTARG}"
         ;;
@@ -137,11 +134,11 @@ while getopts r:m:h flag; do
         ;;
     h)
       usage
-      exit ${E_ILLEGAL_ARGS}
+      exit "${E_ILLEGAL_ARGS}"
       ;;
     *)
       usage
-      exit ${E_ILLEGAL_ARGS}
+      exit "${E_ILLEGAL_ARGS}"
       ;;
   esac
 done
@@ -149,11 +146,11 @@ done
 ####
 # Helper function which tests if a command was successful or failed
 checkError() {
-  if [ $1 -eq 0 ]; then
+  if [ "${1}" -eq 0 ]; then
     echo "OK"
   else
     echo "FAILED - Please check the bootstrap.log file for detailed error messages."
-    exit ${E_BASH}
+    exit "${E_BASH}"
   fi
 }
 
@@ -161,13 +158,13 @@ checkError() {
 # Install OpenNMS Debian repository for specific release
 installOnmsRepo() {
   echo -n "Install OpenNMS Repository         ... "
-  if [ ! -f /etc/yum.repos.d/opennms-repo-${RELEASE}-rhel7.repo ]; then
-    rpm -Uvh http://${MIRROR}/repofiles/opennms-repo-${RELEASE}-rhel7.noarch.rpm 1>/dev/null 2>>${ERROR_LOG}
-    checkError ${?}
+  if [[ ! -f "/etc/yum.repos.d/opennms-repo-${RELEASE}-rhel7.repo" ]]; then
+    rpm -Uvh "http://${MIRROR}/repofiles/opennms-repo-${RELEASE}-rhel7.noarch.rpm" 1>/dev/null 2>>${ERROR_LOG}
+    checkError "${?}"
 
     echo -n "Install OpenNMS Repository Key     ... "
-    rpm --import http://${MIRROR}/OPENNMS-GPG-KEY 2>>${ERROR_LOG}
-    checkError ${?}
+    rpm --import "http://${MIRROR}/OPENNMS-GPG-KEY" 2>>${ERROR_LOG}
+    checkError "${?}"
   else
     echo "SKIP - file opennms-repo-${RELEASE}-rhel7.repo already exist"
   fi
@@ -176,9 +173,9 @@ installOnmsRepo() {
 ####
 # Install the OpenNMS application from Debian repository
 installOnmsApp() {
-  yum -y install opennms
-  ${OPENNMS_HOME}/bin/runjava -s 1>/dev/null 2>>${ERROR_LOG}
-  checkError ${?}
+  yum -y install rrdtool jrrd2 opennms
+  "${OPENNMS_HOME}"/bin/runjava -s 1>>"${ERROR_LOG}" 2>>${ERROR_LOG}
+  checkError "${?}"
   clear
 }
 
@@ -186,18 +183,18 @@ installOnmsApp() {
 # Helper script to initialize the PostgreSQL database
 initializePostgres() {
   echo -n "PostgreSQL initialize                 ... "
-  postgresql-setup initdb 1>/dev/null 2>>${ERROR_LOG}
-  checkError ${?}
+  postgresql-setup initdb 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
+  checkError "${?}"
   echo -n "PostgreSQL set auth from ident to md5 ... "
   sed -i 's/all             127\.0\.0\.1\/32            ident/all             127.0.0.1\/32            md5/g' /var/lib/pgsql/data/pg_hba.conf
   sed -i 's/all             ::1\/128                 ident/all             ::1\/128                 md5/g' /var/lib/pgsql/data/pg_hba.conf
-  checkError ${?}
+  checkError "${?}"
   echo -n "Start PostgreSQL database             ... "
   systemctl start postgresql
-  checkError ${?}
+  checkError "${?}"
   echo -n "PostgreSQL systemd enable             ... "
-  systemctl enable postgresql 1>/dev/null 2>>${ERROR_LOG}
-  checkError ${?}
+  systemctl enable postgresql 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
+  checkError "${?}"
 }
 
 ####
@@ -207,13 +204,13 @@ queryDbCredentials() {
   echo ""
   echo "Create credentials for the OpenNMS Horizon database"
   echo ""
-  read -r -p "Create a username for the database :" DB_USER
-  read -r -s -p "Set a password for database user   :" DB_PASS
-  echo ""
-  echo ""
-  sudo -u postgres psql -c "CREATE USER ${DB_USER} WITH PASSWORD '${DB_PASS}';" 1>/dev/null 2>>${ERROR_LOG}
-  sudo -u postgres psql -c "CREATE DATABASE opennms;" 1>/dev/null 2>>${ERROR_LOG}
-  sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE opennms to ${DB_USER};" 1>/dev/null 2>>${ERROR_LOG}
+  read -r -p "Create a username for the database : " DB_USER
+  read -r -s -p "Set a password for database user   : " DB_PASS
+  {
+    sudo -i -u postgres psql -c "CREATE USER ${DB_USER} WITH PASSWORD '${DB_PASS}';"
+    sudo -i -u postgres psql -c "CREATE DATABASE opennms;"
+    sudo -i -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE opennms to ${DB_USER};"
+  } 1>/dev/null
 }
 
 ####
@@ -222,7 +219,7 @@ queryDbCredentials() {
 setCredentials() {
   echo ""
   echo -n "Generate OpenNMS data source config   ... "
-  if [ -f "${OPENNMS_HOME}/etc/opennms-datasources.xml" ]; then
+  if [[ -f "${OPENNMS_HOME}"/etc/opennms-datasources.xml ]]; then
     printf '<?xml version="1.0" encoding="UTF-8"?>
 <datasource-configuration>
   <connection-pool factory="org.opennms.core.db.C3P0ConnectionFactory"
@@ -245,12 +242,12 @@ setCredentials() {
                     url="jdbc:postgresql://localhost:5432/template1"
                     user-name="%s"
                     password="%s" />
-</datasource-configuration>' ${DB_USER} ${DB_PASS} ${DB_USER} ${DB_PASS} \
-  > ${OPENNMS_HOME}/etc/opennms-datasources.xml
-  checkError ${?}
+</datasource-configuration>' "${DB_USER}" "${DB_PASS}" "${DB_USER}" "${DB_PASS}" \
+  > "${OPENNMS_HOME}"/etc/opennms-datasources.xml
+  checkError "${?}"
   else
     echo "No OpenNMS configuration found in ${OPENNMS_HOME}/etc"
-    exit ${E_ILLEGAL_ARGS}
+    exit "${E_ILLEGAL_ARGS}"
   fi
 }
 
@@ -258,22 +255,22 @@ setCredentials() {
 # Initialize the OpenNMS database schema
 initializeOnmsDb() {
   echo -n "Initialize OpenNMS                    ... "
-  if [ ! -f $OPENNMS_HOME/etc/configured ]; then
-    ${OPENNMS_HOME}/bin/install -dis 1>/dev/null 2>>${ERROR_LOG}
-    checkError ${?}
+  if [[ ! -f "$OPENNMS_HOME"/etc/configured ]]; then
+    "${OPENNMS_HOME}"/bin/install -dis 1>>"${ERROR_LOG}" 2>>${ERROR_LOG}
+    checkError "${?}"
   else
     echo "SKIP - already configured"
   fi
 }
 
 restartOnms() {
-  printf 'START_TIMEOUT=0' > "${OPENNMS_HOME}/etc/opennms.conf"
+  printf 'START_TIMEOUT=0' > "${OPENNMS_HOME}"/etc/opennms.conf
   echo -n "Starting OpenNMS                      ... "
-  systemctl start opennms 1>/dev/null 2>>${ERROR_LOG}
-  checkError ${?}
+  systemctl start opennms 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
+  checkError "${?}"
   echo -n "OpenNMS systemd enable                ... "
-  systemctl enable opennms 1>/dev/null 2>>${ERROR_LOG}
-  checkError ${?}
+  systemctl enable opennms 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
+  checkError "${?}"
 }
 
 # Execute setup procedure
@@ -292,9 +289,10 @@ echo ""
 echo "Congratulations"
 echo "---------------"
 echo ""
-echo "OpenNMS is up and running. You can access the web application with"
+echo "OpenNMS is starting up and might take a few seconds. You can access the"
+echo "web application with"
 echo ""
-echo "http://this-systems-ip:8980"
+echo "  http://this-systems-ip:8980"
 echo ""
 echo "Login with username admin and password admin"
 echo ""
