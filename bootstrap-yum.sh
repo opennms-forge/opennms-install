@@ -12,6 +12,7 @@ REQUIRED_USER="root"
 USER=$(whoami)
 MIRROR="yum.opennms.org"
 ANSWER="No"
+RRDTOOL_VERSION=1.7.1
 
 REQUIRED_SYSTEMS="CentOS|Red\\sHat"
 REQUIRED_JDK="java-11-openjdk-devel"
@@ -76,6 +77,12 @@ checkRequirements() {
     echo "found here: https://tinyurl.com/y4llkagl"
     echo ""
     exit "${E_BASH}"
+  fi
+
+  # When CentOS 8, then install RRDTool 1.7.0 from Appstream instead of OpenNMS repository
+  if grep "CentOS Linux release 8" ${RELEASE_FILE}; then
+    echo "CentOS 8 detected, set RRDTool version to 1.7.0 from Appstream."
+    RRDTOOL_VERSION="1.7.0"
   fi
 }
 
@@ -173,7 +180,7 @@ installOnmsRepo() {
 ####
 # Install the OpenNMS application from Debian repository
 installOnmsApp() {
-  yum -y install rrdtool jrrd2 opennms
+  yum -y install rrdtool-${RRDTOOL_VERSION} jrrd2 opennms
   "${OPENNMS_HOME}"/bin/runjava -s 1>>"${ERROR_LOG}" 2>>${ERROR_LOG}
   checkError "${?}"
   clear
