@@ -12,8 +12,9 @@ REQUIRED_USER="root"
 USER=$(whoami)
 MIRROR="yum.opennms.org"
 ANSWER="No"
+RRDTOOL_VERSION=1.7.1
 
-REQUIRED_SYSTEMS="CentOS|Red\\sHat"
+REQUIRED_SYSTEMS="CentOS.*8|Red\\sHat.*8"
 REQUIRED_JDK="java-11-openjdk-devel"
 RELEASE_FILE="/etc/redhat-release"
 
@@ -39,7 +40,7 @@ checkRequirements() {
   # Test if system is supported
   if ! grep -E "${REQUIRED_SYSTEMS}" "${RELEASE_FILE}" 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"; then
     echo ""
-    echo "This is system is not a supported CentOS or Red Hat."
+    echo "The installer for OpenNMS Horizon 25+ requires at least a CentOS 8 with PostgreSQL 10."
     echo ""
     exit "${E_UNSUPPORTED}"
   fi
@@ -63,19 +64,25 @@ checkRequirements() {
   fi
 
   # Test if a OpenJDK 11 Development Kit is installed
-  if ! yum list installed | grep "${REQUIRED_JDK}" 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"; then
+  if ! dnf list installed | grep "${REQUIRED_JDK}" 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"; then
     echo ""
     echo "OpenNMS Horizon requires OpenJDK 11 Development Kit which is not"
     echo "available on your system. Please install OpenJDK 11 Development"
     echo "with:"
     echo ""
-    echo "    yum install ${REQUIRED_JDK}"
+    echo "    dnf install ${REQUIRED_JDK}"
     echo ""
     echo "Setup your system to use OpenJDK 11 JDK as your default and run the"
     echo "installer again. Hints how to setup your Java Environment can be"
     echo "found here: https://tinyurl.com/y4llkagl"
     echo ""
     exit "${E_BASH}"
+  fi
+
+  # When CentOS 8, then install RRDTool 1.7.0 from Appstream instead of OpenNMS repository
+  if grep "CentOS Linux release 8" ${RELEASE_FILE}; then
+    echo "CentOS 8 detected, set RRDTool version to 1.7.0 from Appstream."
+    RRDTOOL_VERSION="1.7.0"
   fi
 }
 
@@ -173,7 +180,7 @@ installOnmsRepo() {
 ####
 # Install the OpenNMS application from Debian repository
 installOnmsApp() {
-  yum -y install rrdtool jrrd2 opennms
+  dnf -y install rrdtool-${RRDTOOL_VERSION} jrrd2 opennms
   "${OPENNMS_HOME}"/bin/runjava -s 1>>"${ERROR_LOG}" 2>>${ERROR_LOG}
   checkError "${?}"
   clear
@@ -183,7 +190,7 @@ installOnmsApp() {
 # Helper script to initialize the PostgreSQL database
 initializePostgres() {
   echo -n "PostgreSQL initialize                 ... "
-  postgresql-setup initdb 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
+  postgresql-setup --initdb --unit postgresql 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
   checkError "${?}"
   echo -n "PostgreSQL set auth from ident to md5 ... "
   sed -i 's/all             127\.0\.0\.1\/32            ident/all             127.0.0.1\/32            md5/g' /var/lib/pgsql/data/pg_hba.conf
