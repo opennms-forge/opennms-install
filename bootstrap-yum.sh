@@ -64,13 +64,13 @@ checkRequirements() {
   fi
 
   # Test if a OpenJDK 11 Development Kit is installed
-  if ! yum list installed | grep "${REQUIRED_JDK}" 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"; then
+  if ! dnf list installed | grep "${REQUIRED_JDK}" 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"; then
     echo ""
     echo "OpenNMS Horizon requires OpenJDK 11 Development Kit which is not"
     echo "available on your system. Please install OpenJDK 11 Development"
     echo "with:"
     echo ""
-    echo "    yum install ${REQUIRED_JDK}"
+    echo "    dnf install ${REQUIRED_JDK}"
     echo ""
     echo "Setup your system to use OpenJDK 11 JDK as your default and run the"
     echo "installer again. Hints how to setup your Java Environment can be"
@@ -180,7 +180,7 @@ installOnmsRepo() {
 ####
 # Install the OpenNMS application from Debian repository
 installOnmsApp() {
-  yum -y install rrdtool-${RRDTOOL_VERSION} jrrd2 opennms
+  dnf -y install rrdtool-${RRDTOOL_VERSION} jrrd2 opennms
   "${OPENNMS_HOME}"/bin/runjava -s 1>>"${ERROR_LOG}" 2>>${ERROR_LOG}
   checkError "${?}"
   clear
