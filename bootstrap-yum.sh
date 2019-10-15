@@ -14,7 +14,7 @@ MIRROR="yum.opennms.org"
 ANSWER="No"
 RRDTOOL_VERSION=1.7.1
 
-REQUIRED_SYSTEMS="CentOS|Red\\sHat"
+REQUIRED_SYSTEMS="CentOS.*8|Red\\sHat.*8"
 REQUIRED_JDK="java-11-openjdk-devel"
 RELEASE_FILE="/etc/redhat-release"
 
@@ -40,7 +40,7 @@ checkRequirements() {
   # Test if system is supported
   if ! grep -E "${REQUIRED_SYSTEMS}" "${RELEASE_FILE}" 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"; then
     echo ""
-    echo "This is system is not a supported CentOS or Red Hat."
+    echo "The installer for OpenNMS Horizon 25+ requires at least a CentOS 8 with PostgreSQL 10."
     echo ""
     exit "${E_UNSUPPORTED}"
   fi
@@ -190,7 +190,7 @@ installOnmsApp() {
 # Helper script to initialize the PostgreSQL database
 initializePostgres() {
   echo -n "PostgreSQL initialize                 ... "
-  postgresql-setup initdb 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
+  postgresql-setup --initdb --unit postgresql 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
   checkError "${?}"
   echo -n "PostgreSQL set auth from ident to md5 ... "
   sed -i 's/all             127\.0\.0\.1\/32            ident/all             127.0.0.1\/32            md5/g' /var/lib/pgsql/data/pg_hba.conf
