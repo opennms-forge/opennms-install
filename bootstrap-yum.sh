@@ -12,7 +12,6 @@ REQUIRED_USER="root"
 USER=$(whoami)
 MIRROR="yum.opennms.org"
 ANSWER="No"
-RRDTOOL_VERSION=1.7.1
 
 REQUIRED_SYSTEMS="CentOS.*8|Red\\sHat.*8"
 REQUIRED_JDK="java-11-openjdk-devel"
@@ -77,12 +76,6 @@ checkRequirements() {
     echo "found here: https://tinyurl.com/y4llkagl"
     echo ""
     exit "${E_BASH}"
-  fi
-
-  # When CentOS 8, then install RRDTool 1.7.0 from Appstream instead of OpenNMS repository
-  if grep "CentOS Linux release 8" ${RELEASE_FILE}; then
-    echo "CentOS 8 detected, set RRDTool version to 1.7.0 from Appstream."
-    RRDTOOL_VERSION="1.7.0"
   fi
 }
 
@@ -165,22 +158,22 @@ checkError() {
 # Install OpenNMS Debian repository for specific release
 installOnmsRepo() {
   echo -n "Install OpenNMS Repository         ... "
-  if [[ ! -f "/etc/yum.repos.d/opennms-repo-${RELEASE}-rhel7.repo" ]]; then
-    rpm -Uvh "http://${MIRROR}/repofiles/opennms-repo-${RELEASE}-rhel7.noarch.rpm" 1>/dev/null 2>>${ERROR_LOG}
+  if [[ ! -f "/etc/yum.repos.d/opennms-repo-${RELEASE}-rhel8.repo" ]]; then
+    rpm -Uvh "http://${MIRROR}/repofiles/opennms-repo-${RELEASE}-rhel8.noarch.rpm" 1>/dev/null 2>>${ERROR_LOG}
     checkError "${?}"
 
     echo -n "Install OpenNMS Repository Key     ... "
     rpm --import "http://${MIRROR}/OPENNMS-GPG-KEY" 2>>${ERROR_LOG}
     checkError "${?}"
   else
-    echo "SKIP - file opennms-repo-${RELEASE}-rhel7.repo already exist"
+    echo "SKIP - file opennms-repo-${RELEASE}-rhel8.repo already exist"
   fi
 }
 
 ####
 # Install the OpenNMS application from Debian repository
 installOnmsApp() {
-  dnf -y install rrdtool-${RRDTOOL_VERSION} jrrd2 opennms
+  dnf -y install rrdtool jrrd2 opennms
   "${OPENNMS_HOME}"/bin/runjava -s 1>>"${ERROR_LOG}" 2>>${ERROR_LOG}
   checkError "${?}"
   clear
