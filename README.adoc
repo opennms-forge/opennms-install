@@ -25,6 +25,8 @@ sudo bash bootstrap-yum.sh
 sudo bash bootstrap-debian.sh
 ----
 
+On Debian it is required to install the `gnupg` package to be able to install the repository key.
+
 == Installing other releases
 
 It is possible to install different releases of OpenNMS.
