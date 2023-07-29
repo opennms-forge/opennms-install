@@ -5,7 +5,7 @@ The script executes the steps documented in link:http://docs.opennms.org/opennms
 
 The script is tested with:
 
-* Ubuntu 20.04.1 (Focus) 64bit
+* Ubuntu 22.04.2 (Jammy) 64bit
 * Debian 10 (Buster) 64bit
 * CentOS 8 64bit
 
@@ -51,5 +51,5 @@ If you want to install from different package mirror, you can overwrite the defa
 .Example installing from OpenNMS server in EU
 [source, bash]
 ----
-sudo bash bootstrap-debian.sh -m debian.opennms.eu
+sudo bash bootstrap-debian.sh -m your-server-fqdn
 ----
