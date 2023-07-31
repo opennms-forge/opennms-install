@@ -6,7 +6,7 @@ The script executes the steps documented in link:http://docs.opennms.org/opennms
 The script is tested with:
 
 * Ubuntu 22.04.2 (Jammy) 64bit
-* Debian 10 (Buster) 64bit
+* Debian 12 (Bookworm) 64bit
 * CentOS 8 64bit
 
 == Usage
