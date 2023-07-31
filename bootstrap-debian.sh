@@ -314,6 +314,13 @@ initializeOnmsDb() {
   echo -n "Initialize OpenNMS                    ... "
   sudo "${OPENNMS_HOME}"/bin/install -dis 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
   checkError "${?}"
+  echo -n "Set RRDTool as time series backend    ... "
+  printf 'org.opennms.rrd.strategyClass=org.opennms.netmgt.rrd.rrdtool.MultithreadedJniRrdStrategy
+org.opennms.rrd.interfaceJar=/usr/share/java/jrrd2.jar
+opennms.library.jrrd2=/usr/lib/jni/libjrrd2.so
+org.opennms.web.graphs.engine=rrdtool
+rrd.binary=/usr/bin/rrdtool\n' | sudo -u opennms tee ${OPENNMS_HOME}/etc/opennms.properties.d/rrdtool-backend.properties 1>>/dev/null 2>>"${ERROR_LOG}"
+  checkError "${?}"
 }
 
 restartOnms() {
