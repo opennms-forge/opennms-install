@@ -41,6 +41,11 @@ usage() {
 }
 
 checkRequirements() {
+  echo "#############"
+  echo "Welcome to the OpenNMS Horizon installer 👋"
+  echo "##########"
+  echo ""
+
   # Test if system is supported
   DISTRO_CHECK="$(command -v lsb_release 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}")"
   if [[ -z "${DISTRO_CHECK}" ]]; then
@@ -62,10 +67,6 @@ checkRequirements() {
     echo ""
     exit "${E_BASH}"
   fi
-
-  echo -n "Update APT cache                      ... "
-  sudo apt-get update 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
-  checkError "${?}"
 }
 
 showDisclaimer() {
@@ -73,6 +74,7 @@ showDisclaimer() {
   echo "This script installs OpenNMS on a clean system with the following."
   echo "components:"
   echo ""
+  echo " - Installing curl and gnupg2"
   echo " - OpenJDK Development Kit"
   echo " - PostgreSQL Server"
   echo " - Initializing database access with credentials"
@@ -145,6 +147,20 @@ checkError() {
   fi
 }
 
+prepare() {
+  echo "Authenticate with sudo                ... "
+  sudo echo -n "" 2>>"${ERROR_LOG}"
+  checkError "${?}"
+  echo -n "Update APT cache                      ... "
+  sudo apt-get update 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
+  checkError "${?}"
+
+  # Ensure curl and gnupg2 is available
+  echo -n "Install curl and gnupg2               ... "
+  sudo apt-get -y install gnupg2 curl 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
+  checkError "${?}"
+}
+
 ####
 # Helper to request Postgres credentials to initialize the
 # OpenNMS database.
@@ -180,12 +196,20 @@ queryDbCredentials() {
 }
 
 setDbCredentials() {
+  echo -n "Enable SCRAM-SHA-256 in PostgreSQL    ... "
+  sudo -i -u postgres psql -c "ALTER SYSTEM SET password_encryption = 'scram-sha-256';" 1>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
+  checkError "${?}"
+  echo -n "Restart PostgreSQL Server             ... "
+  sudo systemctl restart postgresql 1>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
+  checkError "${?}"
+  echo -n "Create database and users             ... "
   {
     sudo -i -u postgres psql -c "ALTER USER postgres WITH PASSWORD '${POSTGRES_PASS}';"
     sudo -i -u postgres psql -c "CREATE USER ${DB_USER} WITH PASSWORD '${DB_PASS}';"
-    sudo -i -u postgres psql -c "CREATE DATABASE ${DB_NAME};"
-    sudo -i -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE opennms to ${DB_USER};"
-  } 1>/dev/null 2>>"${ERROR_LOG}"
+    sudo -i -u postgres psql -c "GRANT CREATE ON SCHEMA public TO PUBLIC;"
+    sudo -i -u postgres psql -c "CREATE DATABASE ${DB_NAME} WITH OWNER ${DB_USER};"
+  } 1>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
+  checkError "${?}"
 }
 
 ####
@@ -206,16 +230,6 @@ installJdk() {
 installPostgres() {
   echo -n "Install PostgreSQL database           ... "
   sudo apt-get install -y postgresql 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
-  checkError "${?}"
-  PSQL_VERSION=$(psql --version | grep -Po '([0-9]+\.[0-9]+)')
-  export PSQL_VERSION
-}
-
-####
-# Helper script to initialize the PostgreSQL database
-initializePostgres() {
-  echo -n "Start PostgreSQL database             ... "
-  sudo service postgresql start 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
   checkError "${?}"
 }
 
@@ -247,7 +261,7 @@ installOnmsRepo() {
 # Install the OpenNMS application from Debian repository
 installOnmsApp() {
   echo -n "Install OpenNMS Horizon packages      ... "
-  sudo apt-get install -y -qq rrdtool jrrd2 jicmp jicmp6 opennms-common opennms-db opennms-server opennms-webapp-jetty opennms-webapp-hawtio opennms-plugin-cloud 2>>"${ERROR_LOG}"
+  sudo apt-get install -y -qq rrdtool jrrd2 jicmp jicmp6 opennms opennms-webapp-hawtio 2>>"${ERROR_LOG}"
   sudo "${OPENNMS_HOME}"/bin/runjava -s 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
   checkError "${?}"
 }
@@ -298,12 +312,8 @@ setCredentials() {
 # Initialize the OpenNMS database schema
 initializeOnmsDb() {
   echo -n "Initialize OpenNMS                    ... "
-  if [ ! -f "${OPENNMS_HOME}"/etc/configured ]; then
-    sudo "${OPENNMS_HOME}"/bin/install -dis 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
-    checkError "${?}"
-  else
-    echo "[ SKIP ] - already configured"
-  fi
+  sudo "${OPENNMS_HOME}"/bin/install -dis 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
+  checkError "${?}"
 }
 
 restartOnms() {
@@ -317,10 +327,10 @@ restartOnms() {
 
 lockdownDbUser() {
   echo -n "PostgreSQL revoke super user role     ... "
-  sudo -i -u postgres psql -c "ALTER ROLE \"${1}\" NOSUPERUSER;" 1>>"${ERROR_LOG}" 2>>${ERROR_LOG}
+  sudo -i -u postgres psql -c "ALTER ROLE \"${DB_USER}\" NOSUPERUSER;" 1>>"${ERROR_LOG}" 2>>${ERROR_LOG}
   checkError "${?}"
   echo -n "PostgreSQL revoke create db role      ... "
-  sudo -i -u postgres psql -c "ALTER ROLE \"${1}\" NOCREATEDB;" 1>>"${ERROR_LOG}" 2>>${ERROR_LOG}
+  sudo -i -u postgres psql -c "ALTER ROLE \"${DB_USER}\" NOCREATEDB;" 1>>"${ERROR_LOG}" 2>>${ERROR_LOG}
   checkError "${?}"
 }
 
@@ -328,16 +338,16 @@ lockdownDbUser() {
 clear
 checkRequirements
 showDisclaimer
+prepare
 installJdk
 installPostgres
-initializePostgres
 queryDbCredentials
 setDbCredentials
 installOnmsRepo
 installOnmsApp
 setCredentials
 initializeOnmsDb
-lockdownDbUser "${DB_USER}"
+lockdownDbUser
 restartOnms
 
 echo ""
