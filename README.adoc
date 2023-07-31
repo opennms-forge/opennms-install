@@ -1,7 +1,7 @@
 = OpenNMS Install
 
 This script is a convenient bootstrap script to install OpenNMS on Debian or CentOS systems.
-The script executes the steps documented in link:http://docs.opennms.org/opennms/branches/develop/guide-install/guide-install.html#gi-basic-install-opennms[Basic Install] guide.
+The script executes the steps documented in link:https://docs.opennms.com/horizon/latest/deployment/core/getting-started.html[Installation and Configuration guide].
 
 The script is tested with:
 
