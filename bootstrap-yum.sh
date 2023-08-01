@@ -17,7 +17,7 @@ RED="\e[31m"
 GREEN="\e[32m"
 ENDCOLOR="\e[0m"
 
-REQUIRED_SYSTEMS="CentOS.*9|Red\\sHat.*9|Rocky.*9"
+REQUIRED_SYSTEMS="CentOS.*9|Red\\sHat.*9|Rocky.*[8|9]|AlmaLinux.*[8|9]"
 REQUIRED_JDK="java-17-openjdk-devel"
 RELEASE_FILE="/etc/redhat-release"
 
@@ -326,7 +326,7 @@ restartOnms() {
   echo -n "OpenNMS systemd enable                ... "
   sudo systemctl enable opennms 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
   checkError "${?}"
-  echo -n "Enable 8980/tcp in firwall             ... "
+  echo -n "Enable 8980/tcp in firwall            ... "
   sudo firewall-cmd --permanent --add-port=8980/tcp 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
   sudo systemctl reload firewalld 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
   checkError "${?}"
