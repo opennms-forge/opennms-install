@@ -5,9 +5,10 @@ The script executes the steps documented in [Installation and Configuration guid
 
 The script is tested with:
 
-* Ubuntu 22.04.2 (Jammy) 64bit
-* Debian 12 (Bookworm) 64bit
-* Rocky Linux 9 64bit
+* Ubuntu 22.04.2 (Jammy) AMD64
+* Debian 12 (Bookworm) AMD64
+* Rocky Linux 9 AMD64
+* AlmaLinux 8/9 AMD64
 
 [![asciicast](https://asciinema.org/a/dCzY67dR6Ph07X2XLEdoGe9FC.svg)](https://asciinema.org/a/dCzY67dR6Ph07X2XLEdoGe9FC)
 
