@@ -262,7 +262,7 @@ installOnmsRepo() {
 installOnmsApp() {
   echo -n "Install OpenNMS Horizon packages      ... "
   sudo apt-get install -y -qq rrdtool jrrd2 jicmp jicmp6 opennms opennms-webapp-hawtio 2>>"${ERROR_LOG}"
-  sudo "${OPENNMS_HOME}"/bin/runjava -s 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
+  sudo -u opennms "${OPENNMS_HOME}"/bin/runjava -s 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
   checkError "${?}"
 }
 
@@ -300,7 +300,7 @@ setCredentials() {
                     user-name="${scv:postgres-admin:username}"
                     password="${scv:postgres-admin:password}" />
 </datasource-configuration>' "${DB_NAME}" "${DB_NAME}" \
-  | sudo tee "${OPENNMS_HOME}"/etc/opennms-datasources.xml 1>>/dev/null 2>>"${ERROR_LOG}"
+  | sudo -u opennms tee "${OPENNMS_HOME}"/etc/opennms-datasources.xml 1>>/dev/null 2>>"${ERROR_LOG}"
   checkError "${?}"
   else
     echo "No OpenNMS configuration found in ${OPENNMS_HOME}/etc"
