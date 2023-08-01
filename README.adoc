@@ -13,19 +13,17 @@ The script is tested with:
 
 Download the script to your system.
 
-.Execute on CentOS system
+.Execute on an CentOS based system
 [source, bash]
 ----
 sudo bash bootstrap-yum.sh
 ----
 
-.Execute on Ubuntu or Debian system
+.Execute on Debian based system
 [source, bash]
 ----
 sudo bash bootstrap-debian.sh
 ----
-
-On Debian it is required to install the `gnupg` package to be able to install the repository key.
 
 == Installing other releases
 
@@ -38,17 +36,11 @@ The script can set a parameter `-r` which overwrites the default release name `s
 sudo bash bootstrap-debian.sh -r snapshot
 ----
 
-.Example installing from Business Service Monitor branch
-[source, bash]
-----
-sudo bash bootstrap-debian.sh -r branches/features-bsm
-----
-
 == Install from different package mirror
 
 If you want to install from different package mirror, you can overwrite the default `{yum,debian}.mirrors.opennms.org` with your own server.
 
-.Example installing from OpenNMS server in EU
+.Example installing from OpenNMS server from your own server
 [source, bash]
 ----
 sudo bash bootstrap-debian.sh -m your-server-fqdn
