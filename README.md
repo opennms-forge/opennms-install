@@ -7,7 +7,7 @@ The script is tested with:
 
 * Ubuntu 22.04.2 (Jammy) x86_64
 * Debian 12 (Bookworm) x86_64
-* Rocky Linux 9 x86_64
+* Rocky Linux 9.2 (Blue Onyx) x86_64
 * AlmaLinux 8.8 (Sapphire Caracal) x86_64
 * AlmaLinux 9.2 (Turquoise Kodkod) x86_64
 

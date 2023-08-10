@@ -3,7 +3,6 @@
 # Script to bootstrap a basic OpenNMS setup
 
 # Default build identifier set to stable
-RELEASE="stable"
 ERROR_LOG="bootstrap.log"
 POSTGRES_USER="postgres"
 POSTGRES_PASS=""
@@ -11,12 +10,10 @@ DB_NAME="opennms"
 DB_USER="opennms"
 DB_PASS="opennms"
 OPENNMS_HOME="/opt/opennms"
-MIRROR="yum.opennms.org"
 ANSWER="No"
 RED="\e[31m"
 GREEN="\e[32m"
 ENDCOLOR="\e[0m"
-
 REQUIRED_SYSTEMS="CentOS.*9|Red\\sHat.*9|Rocky.*[8|9]|AlmaLinux.*[8|9]"
 REQUIRED_JDK="java-17-openjdk-devel"
 RELEASE_FILE="/etc/redhat-release"
@@ -32,10 +29,6 @@ usage() {
   echo ""
   echo "Bootstrap OpenNMS basic setup on Debian based system."
   echo ""
-  echo "-r: Set a release: stable | testing | snapshot"
-  echo "    Default: ${RELEASE}"
-  echo "-m: Set alternative mirror server for packages"
-  echo "    Default: ${MIRROR}"
   echo "-h: Show this help"
 }
 
@@ -111,14 +104,8 @@ showDisclaimer() {
 ####
 # The -r option is optional and allows to set the release of OpenNMS.
 # The -m option allows to overwrite the package repository server.
-while getopts r:m:h flag; do
+while getopts h flag; do
   case "${flag}" in
-    r)
-        RELEASE="${OPTARG}"
-        ;;
-    m)
-        MIRROR="${OPTARG}"
-        ;;
     h)
       usage
       exit "${E_ILLEGAL_ARGS}"
@@ -223,16 +210,8 @@ installPostgres() {
 # Install OpenNMS Debian repository for specific release
 installOnmsRepo() {
   echo -n "Install OpenNMS Repository            ... "
-  if [[ ! -f "/etc/yum.repos.d/opennms-repo-${RELEASE}-rhel9.repo" ]]; then
-    sudo rpm -Uvh "https://${MIRROR}/repofiles/opennms-repo-${RELEASE}-rhel9.noarch.rpm" 1>/dev/null 2>>${ERROR_LOG}
-    checkError "${?}"
-
-    echo -n "Install OpenNMS Repository Key        ... "
-    sudo rpm --import "https://${MIRROR}/OPENNMS-GPG-KEY" 2>>${ERROR_LOG}
-    checkError "${?}"
-  else
-    echo "SKIP - file opennms-repo-${RELEASE}-rhel9.repo already exist"
-  fi
+  curl -1sLf 'https://packages.opennms.com/public/stable/setup.rpm.sh' | sudo -E bash
+  curl -1sLf 'https://packages.opennms.com/public/common/setup.rpm.sh' | sudo -E bash
 }
 
 ####

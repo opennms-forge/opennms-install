@@ -4,7 +4,6 @@
 
 # Default build identifier set to stable
 DEBIAN_FRONTEND=noninteractive
-RELEASE="stable"
 ERROR_LOG="bootstrap.log"
 POSTGRES_USER="postgres"
 POSTGRES_PASS=""
@@ -12,8 +11,6 @@ DB_NAME="opennms"
 DB_USER="opennms"
 DB_PASS="opennms"
 OPENNMS_HOME="/usr/share/opennms"
-OPENNMS_GPG_KEYRING="/usr/share/keyrings/opennms-keyring.gpg"
-MIRROR="debian.opennms.org"
 ANSWER="No"
 RED="\e[31m"
 GREEN="\e[32m"
@@ -33,10 +30,6 @@ usage() {
   echo ""
   echo "Bootstrap OpenNMS basic setup on Debian based system."
   echo ""
-  echo "-r: Set a release: stable | testing | snapshot"
-  echo "    Default: ${RELEASE}"
-  echo "-m: Set alternative mirror server for packages"
-  echo "    Default: ${MIRROR}"
   echo "-h: Show this help"
 }
 
@@ -74,7 +67,7 @@ showDisclaimer() {
   echo "This script installs OpenNMS on a clean system with the following."
   echo "components:"
   echo ""
-  echo " - Installing curl and gnupg2"
+  echo " - Installing installer dependencies curl, gnupg2, apt-transport-https"
   echo " - OpenJDK Development Kit"
   echo " - PostgreSQL Server"
   echo " - Initializing database access with credentials"
@@ -117,14 +110,8 @@ showDisclaimer() {
 ####
 # The -r option is optional and allows to set the release of OpenNMS.
 # The -m option allows to overwrite the package repository server.
-while getopts r:m:h flag; do
+while getopts h flag; do
   case "${flag}" in
-    r)
-        RELEASE="${OPTARG}"
-        ;;
-    m)
-        MIRROR="${OPTARG}"
-        ;;
     h)
       usage
       exit "${E_ILLEGAL_ARGS}"
@@ -155,9 +142,9 @@ prepare() {
   sudo apt-get update 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
   checkError "${?}"
 
-  # Ensure curl and gnupg2 is available
-  echo -n "Install curl and gnupg2               ... "
-  sudo apt-get -y install gnupg2 curl 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
+  # Ensure curl, gnupg2 abd apt-transport-https is available
+  echo -n "Install dependencies                  ... "
+  sudo apt-get -y install gnupg2 curl apt-transport-https 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
   checkError "${?}"
 }
 
@@ -236,25 +223,9 @@ installPostgres() {
 ####
 # Install OpenNMS Debian repository for specific release
 installOnmsRepo() {
-  echo -n "Install OpenNMS GPG Key               ... "
-  if [[ ! -f "${OPENNMS_GPG_KEYRING}" ]]; then
-    curl -fsSL https://debian.opennms.org/OPENNMS-GPG-KEY | sudo gpg --dearmor -o "${OPENNMS_GPG_KEYRING}" 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
-    checkError "${?}"
-  else
-    echo "[ SKIP ] - keyring file already exists"
-  fi
-
-  echo -n "Install Horizon Repository            ... "
-  if [[ ! -f /etc/apt/sources.list.d/opennms.list ]]; then
-    sudo printf 'deb [signed-by=%s] https://%s %s main\n' "${OPENNMS_GPG_KEYRING}" "${MIRROR}" "${RELEASE}" \
-           | sudo tee /etc/apt/sources.list.d/opennms.list 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
-    checkError "${?}"
-    echo -n "Update APT cache                      ... "
-    sudo apt-get update 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
-    checkError "${?}"
-  else
-    echo "[ SKIP ] - file opennms.list already exist"
-  fi
+  echo "Install Horizon Repository            ... "
+  curl -1sLf 'https://packages.opennms.com/public/stable/setup.deb.sh' | sudo -E bash
+  curl -1sLf 'https://packages.opennms.com/public/common/setup.deb.sh' | sudo -E bash
 }
 
 ####
