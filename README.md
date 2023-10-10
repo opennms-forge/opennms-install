@@ -13,7 +13,7 @@ The script is tested with:
 
 [![asciicast](https://asciinema.org/a/dCzY67dR6Ph07X2XLEdoGe9FC.svg)](https://asciinema.org/a/dCzY67dR6Ph07X2XLEdoGe9FC)
 
-If you want to learn in detail take a look into the deployment section in our documentation for [OpenNMS Horizon](https://docs.opennms.com/horizon/latest/) or [OpenNMS Meridian](https://docs.opennms.com/meridian/latest/).
+💁‍♀️ If you want to learn in detail take a look into the deployment section in our documentation for [OpenNMS Horizon](https://docs.opennms.com/horizon/latest/) or [OpenNMS Meridian](https://docs.opennms.com/meridian/latest/).
 We have started also to work on Ansible roles for the Ubuntu-based operating systems which you can find at https://github.com/opennms-forge/ansible-opennms.
 
 ## 🎯 Scope
