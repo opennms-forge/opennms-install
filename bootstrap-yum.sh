@@ -235,13 +235,17 @@ setCredentials() {
   echo -n "Generate OpenNMS database config      ... "
   if [[ -f "${OPENNMS_HOME}"/etc/opennms-datasources.xml ]]; then
     printf '<?xml version="1.0" encoding="UTF-8"?>
-<datasource-configuration>
-  <connection-pool factory="org.opennms.core.db.C3P0ConnectionFactory"
-    idleTimeout="600"
-    loginTimeout="3"
-    minPool="50"
-    maxPool="50"
-    maxSize="50" />
+<datasource-configuration xmlns:this="http://xmlns.opennms.org/xsd/config/opennms-datasources"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://xmlns.opennms.org/xsd/config/opennms-datasources
+  http://www.opennms.org/xsd/config/opennms-datasources.xsd ">
+
+  <connection-pool factory="org.opennms.core.db.HikariCPConnectionFactory"
+      idleTimeout="600"
+      loginTimeout="3"
+      minPool="25"
+      maxPool="50"
+      maxSize="50" />
 
   <jdbc-data-source name="opennms"
                     database-name="%s"
@@ -255,7 +259,24 @@ setCredentials() {
                     class-name="org.postgresql.Driver"
                     url="jdbc:postgresql://localhost:5432/template1"
                     user-name="${scv:postgres-admin:username}"
-                    password="${scv:postgres-admin:password}" />
+                    password="${scv:postgres-admin:password}">
+    <connection-pool idleTimeout="600"
+                     minPool="0"
+                     maxPool="10"
+                     maxSize="50" />
+  </jdbc-data-source>
+
+  <jdbc-data-source name="opennms-monitor"
+                    database-name="postgres"
+                    class-name="org.postgresql.Driver"
+                    url="jdbc:postgresql://localhost:5432/postgres"
+                    user-name="${scv:postgres-admin:username}"
+                    password="${scv:postgres-admin:password}">
+    <connection-pool idleTimeout="600"
+                     minPool="0"
+                     maxPool="10"
+                     maxSize="50" />
+  </jdbc-data-source>
 </datasource-configuration>' "${DB_NAME}" "${DB_NAME}" \
   | sudo -u opennms tee "${OPENNMS_HOME}"/etc/opennms-datasources.xml 1>>/dev/null 2>>"${ERROR_LOG}"
   checkError "${?}"
