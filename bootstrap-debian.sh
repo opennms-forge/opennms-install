@@ -2,6 +2,9 @@
 #
 # Script to bootstrap a basic OpenNMS setup
 
+set -eEuo pipefail
+trap 's=$?; echo >&2 "$0: Error on line "$LINENO": $BASH_COMMAND"; exit $s' ERR
+
 # Default build identifier set to stable
 DEBIAN_FRONTEND=noninteractive
 ERROR_LOG="bootstrap.log"
