@@ -9,7 +9,7 @@ The script is tested with:
 * Debian 12 (Bookworm) x86_64
 * Rocky Linux 9.2 (Blue Onyx) x86_64
 * AlmaLinux 8.8 (Sapphire Caracal) x86_64
-* AlmaLinux 9.2 (Turquoise Kodkod) x86_64
+* AlmaLinux 9.3 (Shamrock Pampas Cat) x86_64
 
 [![asciicast](https://asciinema.org/a/dCzY67dR6Ph07X2XLEdoGe9FC.svg)](https://asciinema.org/a/dCzY67dR6Ph07X2XLEdoGe9FC)
 
