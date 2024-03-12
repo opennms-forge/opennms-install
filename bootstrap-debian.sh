@@ -171,7 +171,7 @@ queryDbCredentials() {
   echo ""
   echo "Create OpenNMS Horizon database with user credentials"
   echo ""
-  read -r -p    "Database name for OpenNMS Horizon (default: opennms): " DB_NAME
+  read -r -p    "Database name for OpenNMS Horizon (default: opennms): " ${DB_NAME}
   read -r -p    "User for the database: " DB_USER
   while true; do
     read -r -s -p "New password: " DB_PASS
