@@ -163,8 +163,12 @@ queryDbCredentials() {
     echo ""
     read -r -s -p "Confirm postgres password: " POSTGRES_PASS_CONFIRM
     echo ""
-    [ "${POSTGRES_PASS}" = "${POSTGRES_PASS_CONFIRM}" ] && break
-    echo "Password confirmation didn't match, please try again."
+    if [ ! -z "${POSTGRES_PASS}" ]; then
+      [ "${POSTGRES_PASS}" = "${POSTGRES_PASS_CONFIRM}" ] && break
+      echo "Password confirmation didn't match, please try again."
+    else
+      echo "Password for the PostgreSQL user can't be empty. Please set a password."
+    fi
     echo ""
   done
   echo ""
@@ -172,14 +176,20 @@ queryDbCredentials() {
   echo "Create OpenNMS Horizon database with user credentials"
   echo ""
   read -r -p    "Database name for OpenNMS Horizon (default: opennms): " DB_NAME
-  read -r -p    "User for the database: " DB_USER
+  DB_NAME="${DB_NAME:-opennms}"
+  read -r -p    "User for the database (default: opennms): " DB_USER
+  DB_USER="${DB_USER:-opennms}"
   while true; do
     read -r -s -p "New password: " DB_PASS
     echo ""
     read -r -s -p "Confirm password: " DB_PASS_CONFIRM
     echo ""
-    [ "${DB_PASS}" = "${DB_PASS_CONFIRM}" ] && break
-    echo "Password confirmation didn't match, please try again."
+    if [ ! -z "${DB_PASS}" ]; then
+      [ "${DB_PASS}" = "${DB_PASS_CONFIRM}" ] && break
+      echo "Password confirmation didn't match, please try again."
+    else
+      echo "Password for the OpenNMS database user can't be empty. Please set a password."
+    fi
     echo ""
   done
   echo ""
