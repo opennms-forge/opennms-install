@@ -207,7 +207,7 @@ setDbCredentials() {
     sudo -i -u postgres psql -c "ALTER USER postgres WITH PASSWORD '${POSTGRES_PASS}';"
     sudo -i -u postgres psql -c "CREATE USER ${DB_USER} WITH PASSWORD '${DB_PASS}';"
     sudo -i -u postgres psql -c "GRANT CREATE ON SCHEMA public TO PUBLIC;"
-    sudo -i -u postgres psql -c "CREATE DATABASE ${DB_NAME} WITH OWNER ${DB_USER};"
+    sudo -i -u postgres psql -c "CREATE DATABASE ${DB_NAME} WITH OWNER ${DB_USER} ENCODING UTF8 TEMPLATE template0;"
   } 1>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
   checkError "${?}"
 }
