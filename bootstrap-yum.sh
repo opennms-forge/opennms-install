@@ -30,7 +30,7 @@ E_UNSUPPORTED=128
 # Help function used in error messages and -h option
 usage() {
   echo ""
-  echo "Bootstrap OpenNMS basic setup on Debian based system."
+  echo "Bootstrap OpenNMS basic setup on Centos9, RHEL 9 or Rocky based system."
   echo ""
   echo "-h: Show this help"
 }
@@ -220,7 +220,7 @@ installPostgres() {
 }
 
 ####
-# Install OpenNMS Debian repository for specific release
+# Install OpenNMS rpm repository for specific release
 installOnmsRepo() {
   echo -n "Install OpenNMS Repository            ... "
   curl -1sLf 'https://packages.opennms.com/public/stable/setup.rpm.sh' | sudo -E bash
@@ -228,7 +228,7 @@ installOnmsRepo() {
 }
 
 ####
-# Install the OpenNMS application from Debian repository
+# Install the OpenNMS application from rpm repository
 installOnmsApp() {
   echo -n "Install OpenNMS Horizon packages      ... "
   sudo dnf -y install rrdtool jrrd2 jicmp jicmp6 opennms-core opennms-webapp-jetty opennms-plugin-cloud opennms-webapp-hawtio 1>>"${ERROR_LOG}" 2>>${ERROR_LOG}
@@ -339,10 +339,20 @@ restartOnms() {
   echo -n "OpenNMS systemd enable                ... "
   sudo systemctl enable opennms 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
   checkError "${?}"
-  echo -n "Enable 8980/tcp in firwall            ... "
-  sudo firewall-cmd --permanent --add-port=8980/tcp 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
-  sudo systemctl reload firewalld 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
-  checkError "${?}"
+
+  # If firewalld is enabled, then open a port in the firewall, else skip it. 
+  echo -n "Checking if firewalld is enabled      ... "
+  if /usr/bin/firewall-cmd --state >/dev/null 2>&1; then
+    echo -e "[ ${GREEN}OK${ENDCOLOR} ]"  # Defined the colour manually as can't use checkerror() due to exit command. 
+    echo -n "Firewalld is enabled                ... "
+    echo -n "Opening port 8980/tcp in firewall   ... "
+    sudo firewall-cmd --permanent --add-port=8980/tcp 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
+    sudo systemctl reload firewalld 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
+  else
+    echo -e "[ ${RED}DISABLED${ENDCOLOR} ]" # Defined the colour manually as can't use checkerror() due to exit command. 
+    echo "Firewalld not running or not installed  ..."
+    echo "Skipping opening port on firewall and continuing install ..."
+  fi
 }
 
 lockdownDbUser() {
@@ -353,6 +363,34 @@ lockdownDbUser() {
   sudo -i -u postgres psql -c "ALTER ROLE \"${DB_USER}\" NOCREATEDB;" 1>>"${ERROR_LOG}" 2>>${ERROR_LOG}
   checkError "${?}"
 }
+
+# Disable the repo and lock the versions. 
+disableRepo() {
+  echo "Disabling autoupdates of opennms to ensure we stay on version `rpm -q opennms-core | awk -F 'opennms-core-' '{print $2}' | awk -F '.noarch' '{print $1}'`  ... "
+  echo -n "Disabling opennms-common repo        ... "
+  dnf config-manager --disable opennms-common
+  checkError "${?}"
+  echo -n "Disabling opennms-stable repo        ... "
+  dnf config-manager --disable opennms-stable
+  checkError "${?}"
+  dnf config-manager --disable opennms-common opennms-stable
+  checkError "${?}"
+}
+
+# Wait 20 seconds for OpenNMS to start. 
+waitForStart() {
+  echo -n "Waiting 20 seconds for OpenNMS to start ..."
+  for a in {1..19}
+  do
+    echo -n "$a... "
+    sleep 1
+  done
+  echo "20... "
+  checkError "${?}"
+  echo
+  echo
+}
+
 
 # Execute setup procedure
 clear
@@ -370,6 +408,9 @@ setCredentials
 initializeOnmsDb
 lockdownDbUser
 restartOnms
+disableRepo
+waitForStart
+
 
 echo ""
 echo "Congratulations"
