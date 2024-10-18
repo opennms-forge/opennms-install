@@ -228,8 +228,16 @@ installJdk() {
 ####
 # Install the PostgreSQL database
 installPostgres() {
+  echo -n "Add PostgreSQL repository key         ... "
+  curl -1sLf "https://www.postgresql.org/media/keys/ACCC4CF8.asc" | gpg --dearmor | sudo tee "/usr/share/keyrings/postgresql.gpg" 1>/dev/null 2>>"${ERROR_LOG}"
+  checkError "${?}"
+  echo -n "Add PostgreSQL repository             ... "
+  echo "deb [arch=amd64,arm64,ppc64el signed-by=/usr/share/keyrings/postgresql.gpg] http://apt.postgresql.org/pub/repos/apt/ $(lsb_release -cs)-pgdg main" | sudo tee /etc/apt/sources.list.d/postgresql.list 1>/dev/null 2>>"${ERROR_LOG}"
+  checkError "${?}"
+  echo -n "Update apt cache                      ... "
+  checkError "${?}"
   echo -n "Install PostgreSQL database           ... "
-  sudo apt-get install -y postgresql 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
+  sudo apt-get install -y postgresql-15 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
   checkError "${?}"
 }
 
