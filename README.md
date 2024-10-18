@@ -5,11 +5,12 @@ The script executes the steps documented in [Installation and Configuration guid
 
 The script is tested with:
 
-* Ubuntu 22.04.2 (Jammy) x86_64
+* Ubuntu 24.04.1 (Noble Numbat) x86_64
 * Debian 12 (Bookworm) x86_64
-* Rocky Linux 9.3 (Blue Onyx) x86_64
-* AlmaLinux 8.8 (Sapphire Caracal) x86_64
-* AlmaLinux 9.3 (Shamrock Pampas Cat) x86_64
+* Rocky Linux 9.4 (Blue Onyx) x86_64
+* Rocky Linux 8.10 (Green Obsidian) x86_64
+* AlmaLinux 9.4 (Seafoam Ocelot) x86_64
+* AlmaLinux 8.10 (Cerulean Leopard) x86_64
 
 [![asciicast](https://asciinema.org/a/dCzY67dR6Ph07X2XLEdoGe9FC.svg)](https://asciinema.org/a/dCzY67dR6Ph07X2XLEdoGe9FC)
 

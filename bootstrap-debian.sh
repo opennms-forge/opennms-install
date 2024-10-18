@@ -21,6 +21,7 @@ ENDCOLOR="\e[0m"
 
 REQUIRED_SYSTEMS="Ubuntu|Debian"
 REQUIRED_JDK="openjdk-17-jdk"
+export IP_ADDRESS=$(hostname -I | awk '{print $1}') # export the address so it can also be used in the timeout command
 
 # Error codes
 E_ILLEGAL_ARGS=126
@@ -60,6 +61,15 @@ checkRequirements() {
     echo ""
     echo "This script requires sudo which could not be found."
     echo "Please install the sudo package."
+    echo ""
+    exit "${E_BASH}"
+  fi
+
+  # The timeout command is required to testing the availability of the web application
+  if ! command -v timeout 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"; then
+    echo ""
+    echo "This script requires timeout which could not be found."
+    echo "Please install the coreutils package."
     echo ""
     exit "${E_BASH}"
   fi
@@ -235,6 +245,7 @@ installPostgres() {
   echo "deb [arch=amd64,arm64,ppc64el signed-by=/usr/share/keyrings/postgresql.gpg] http://apt.postgresql.org/pub/repos/apt/ $(lsb_release -cs)-pgdg main" | sudo tee /etc/apt/sources.list.d/postgresql.list 1>/dev/null 2>>"${ERROR_LOG}"
   checkError "${?}"
   echo -n "Update apt cache                      ... "
+  sudo apt-get update 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
   checkError "${?}"
   echo -n "Install PostgreSQL database           ... "
   sudo apt-get install -y postgresql-15 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
@@ -354,6 +365,28 @@ lockdownDbUser() {
   checkError "${?}"
 }
 
+# Disable the repo and lock the versions.
+disableRepo() {
+  echo -n "Disabling autoupdates                 ... "
+  sudo apt-mark hold libopennms-java \
+    libopennmsdeps-java \
+    opennms \
+    opennms-common \
+    opennms-db \
+    opennms-server \
+    opennms-source \
+    opennms-webapp-hawtio \
+    opennms-webapp-jetty 1>/dev/null 2>>${ERROR_LOG}
+  checkError "${?}"
+}
+
+# Wait 20 seconds for OpenNMS to start.
+waitForStart() {
+  echo -n "Wait for the Web UI (timeout 2m)      ... "
+  timeout 120s bash -c 'until curl -f -I -L http://${IP_ADDRESS}:8980; do sleep 1; done' 1>/dev/null 2>/dev/null
+  checkError "${?}"
+}
+
 # Execute setup procedure
 clear
 checkRequirements
@@ -369,6 +402,8 @@ setCredentials
 initializeOnmsDb
 lockdownDbUser
 restartOnms
+disableRepo
+waitForStart
 
 echo ""
 echo "Congratulations"
@@ -377,7 +412,7 @@ echo ""
 echo "OpenNMS is starting up and might take a few seconds. You can access the"
 echo "web application with"
 echo ""
-echo "  http://$(hostname -I | awk '{print $1}'):8980"
+echo "  http://${IP_ADDRESS}:8980"
 echo ""
 echo "Login with username admin and password admin"
 echo ""

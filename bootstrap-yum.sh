@@ -16,10 +16,12 @@ OPENNMS_HOME="/opt/opennms"
 ANSWER="No"
 RED="\e[31m"
 GREEN="\e[32m"
+YELLOW="\e[33m"
 ENDCOLOR="\e[0m"
 REQUIRED_SYSTEMS="CentOS.*9|Red\\sHat.*9|Rocky.*[8|9]|AlmaLinux.*[8|9]"
 REQUIRED_JDK="java-17-openjdk-devel"
 RELEASE_FILE="/etc/redhat-release"
+export IP_ADDRESS=$(hostname -I | awk '{print $1}') # export the address so it can also be used in the timeout command
 
 # Error codes
 E_ILLEGAL_ARGS=126
@@ -54,6 +56,15 @@ checkRequirements() {
     echo ""
     echo "This script requires sudo which could not be found."
     echo "Please install the sudo package."
+    echo ""
+    exit "${E_BASH}"
+  fi
+
+  # The timeout command is required to testing the availability of the web application
+  if ! command -v timeout 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"; then
+    echo ""
+    echo "This script requires timeout which could not be found."
+    echo "Please install the coreutils package."
     echo ""
     exit "${E_BASH}"
   fi
@@ -342,16 +353,22 @@ restartOnms() {
 
   # If firewalld is enabled, then open a port in the firewall, else skip it. 
   echo -n "Checking if firewalld is enabled      ... "
-  if /usr/bin/firewall-cmd --state >/dev/null 2>&1; then
-    echo -e "[ ${GREEN}OK${ENDCOLOR} ]"  # Defined the colour manually as can't use checkerror() due to exit command. 
-    echo -n "Firewalld is enabled                ... "
-    echo -n "Opening port 8980/tcp in firewall   ... "
+  if systemctl status firewalld.service >/dev/null 2>&1; then
+    echo -e "[ ${GREEN}ENABLED${ENDCOLOR} ]"  # Defined the colour manually as can't use checkerror() due to exit command.
+    echo -n "Opening Web UI port 8980/tcp          ... "
     sudo firewall-cmd --permanent --add-port=8980/tcp 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
-    sudo systemctl reload firewalld 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
+    checkError "${?}"
+    echo -n "Opening SNMP Trap port 10162/udp      ... "
+    sudo firewall-cmd --permanent --add-port=10162/udp 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
+    checkError "${?}"
+    echo -n "Opening Network flow port 9999/udp    ... "
+    sudo firewall-cmd --permanent --add-port=9999/udp 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
+    checkError "${?}"
+    echo -n "Reload Firewalld configuration        ... "
+    sudo systemctl reload firewalld.service 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
+    checkError "${?}"
   else
-    echo -e "[ ${RED}DISABLED${ENDCOLOR} ]" # Defined the colour manually as can't use checkerror() due to exit command. 
-    echo "Firewalld not running or not installed  ..."
-    echo "Skipping opening port on firewall and continuing install ..."
+    echo -e "[ ${YELLOW}DISABLED - SKIP${ENDCOLOR} ]" # Defined the colour manually as can't use checkerror() due to exit command.
   fi
 }
 
@@ -366,31 +383,17 @@ lockdownDbUser() {
 
 # Disable the repo and lock the versions. 
 disableRepo() {
-  echo "Disabling autoupdates of opennms to ensure we stay on version `rpm -q opennms-core | awk -F 'opennms-core-' '{print $2}' | awk -F '.noarch' '{print $1}'`  ... "
-  echo -n "Disabling opennms-common repo        ... "
-  dnf config-manager --disable opennms-common
-  checkError "${?}"
-  echo -n "Disabling opennms-stable repo        ... "
-  dnf config-manager --disable opennms-stable
-  checkError "${?}"
-  dnf config-manager --disable opennms-common opennms-stable
+  echo -n "Disabling autoupdates                 ... "
+  sudo dnf config-manager --disable opennms-common opennms-stable
   checkError "${?}"
 }
 
 # Wait 20 seconds for OpenNMS to start. 
 waitForStart() {
-  echo -n "Waiting 20 seconds for OpenNMS to start ..."
-  for a in {1..19}
-  do
-    echo -n "$a... "
-    sleep 1
-  done
-  echo "20... "
+  echo -n "Wait for the Web UI (timeout 2m)      ... "
+  timeout 120s bash -c 'until curl -f -I -L http://${IP_ADDRESS}:8980; do sleep 1; done' 1>/dev/null 2>/dev/null
   checkError "${?}"
-  echo
-  echo
 }
-
 
 # Execute setup procedure
 clear
@@ -411,7 +414,6 @@ restartOnms
 disableRepo
 waitForStart
 
-
 echo ""
 echo "Congratulations"
 echo "---------------"
@@ -419,7 +421,7 @@ echo ""
 echo "OpenNMS is starting up and might take a few seconds. You can access the"
 echo "web application with"
 echo ""
-echo "  http://$(hostname -I | awk '{print $1}'):8980"
+echo "  http://${IP_ADDRESS}:8980"
 echo ""
 echo "Login with username admin and password admin"
 echo ""
