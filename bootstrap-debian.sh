@@ -7,7 +7,8 @@ set -eEuo pipefail
 trap 's=${?}; echo >&2 "${0}: Error on line "${LINENO}": ${BASH_COMMAND}"; exit ${s}' ERR
 
 # Default build identifier set to stable
-export DEBIAN_FRONTEND=noninteractive
+# shellcheck disable=SC2034
+DEBIAN_FRONTEND=noninteractive
 ERROR_LOG="bootstrap.log"
 POSTGRES_USER="postgres"
 POSTGRES_PASS=""
@@ -21,7 +22,7 @@ GREEN="\e[32m"
 ENDCOLOR="\e[0m"
 
 REQUIRED_SYSTEMS="Ubuntu|Debian"
-REQUIRED_JDK="openjdk-17-jdk"
+REQUIRED_JDK="temurin-17-jdk"
 PSQL_MAX_VERSION=15
 IP_ADDRESS=$(hostname -I | awk '{print $1}') # export the address so it can also be used in the timeout command
 
@@ -92,7 +93,7 @@ showDisclaimer() {
   echo "components:"
   echo ""
   echo " - Installing installer dependencies curl, gnupg2, apt-transport-https"
-  echo " - OpenJDK Development Kit"
+  echo " - Temurin 17 Java Development Kit"
   echo " - PostgreSQL Server"
   echo " - Initializing database access with credentials"
   echo " - OpenNMS Repositories"
@@ -159,7 +160,7 @@ checkError() {
 }
 
 prepare() {
-  echo -n "👮 Authenticate with sudo                ... "
+  echo "👮 Authenticate with sudo                ... "
   sudo echo -n "" 2>>"${ERROR_LOG}"
   checkError "${?}"
   echo -n "📦 Update APT cache                      ... "
@@ -239,10 +240,19 @@ EOF
 }
 
 ####
-# Install OpenJDK Development kit
+# Install Temurin 17 Java Development Kit
 installJdk() {
-  # Test if a OpenJDK 17 Development Kit is installed
-  echo -n "📦 Install OpenJDK Development Kit       ... "
+  echo -n "📦 Add Temurin repository key         ... "
+  curl -1sLf "https://packages.adoptium.net/artifactory/api/gpg/key/public" | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/adoptium.gpg 1>/dev/null 2>>"${ERROR_LOG}"
+  checkError "${?}"
+  echo -n "📦 Add Temurin repository             ... "
+  echo "deb https://packages.adoptium.net/artifactory/deb $(awk -F= '/^VERSION_CODENAME/{print$2}' /etc/os-release) main" | sudo tee /etc/apt/sources.list.d/adoptium.list 1>/dev/null 2>>"${ERROR_LOG}"
+  checkError "${?}"
+  echo -n "📦 Update apt cache                   ... "
+  sudo apt-get update 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
+  checkError "${?}"
+  # Test if a Temuring 17 Java Development Kit is installed
+  echo -n "📦 Install Temurin 17 JDK             ... "
   if ! apt list --installed 2>>"${ERROR_LOG}" | grep "${REQUIRED_JDK}" 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"; then
     sudo apt-get install -y --no-install-recommends ${REQUIRED_JDK} 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
     checkError "${?}"
