@@ -5,7 +5,7 @@ The script executes the steps documented in [Installation and Configuration guid
 
 The script is tested with:
 
-* Ubuntu 24.04.1 (Noble Numbat) x86_64
+* Ubuntu 24.04 (Noble Numbat) x86_64
 * Debian 12 (Bookworm) x86_64
 * Rocky Linux 9.4 (Blue Onyx) x86_64
 * Rocky Linux 8.10 (Green Obsidian) x86_64
