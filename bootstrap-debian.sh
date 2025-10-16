@@ -3,10 +3,11 @@
 # Script to bootstrap a basic OpenNMS setup
 
 set -eEuo pipefail
-trap 's=$?; echo >&2 "$0: Error on line "$LINENO": $BASH_COMMAND"; exit $s' ERR
+# shellcheck disable=SC2154
+trap 's=${?}; echo >&2 "${0}: Error on line "${LINENO}": ${BASH_COMMAND}"; exit ${s}' ERR
 
 # Default build identifier set to stable
-DEBIAN_FRONTEND=noninteractive
+export DEBIAN_FRONTEND=noninteractive
 ERROR_LOG="bootstrap.log"
 POSTGRES_USER="postgres"
 POSTGRES_PASS=""
@@ -21,7 +22,8 @@ ENDCOLOR="\e[0m"
 
 REQUIRED_SYSTEMS="Ubuntu|Debian"
 REQUIRED_JDK="openjdk-17-jdk"
-export IP_ADDRESS=$(hostname -I | awk '{print $1}') # export the address so it can also be used in the timeout command
+PSQL_MAX_VERSION=15
+IP_ADDRESS=$(hostname -I | awk '{print $1}') # export the address so it can also be used in the timeout command
 
 # Error codes
 E_ILLEGAL_ARGS=126
@@ -43,6 +45,15 @@ checkRequirements() {
   echo "##########"
   echo ""
 
+  # The lsb_release is required
+  if ! command -v lsb_release 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"; then
+    echo ""
+    echo "This script requires lsb_release could not be found."
+    echo "Please install the lsb-release package."
+    echo ""
+    exit "${E_BASH}"
+  fi
+
   # Test if system is supported
   DISTRO_CHECK="$(command -v lsb_release 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}")"
   if [[ -z "${DISTRO_CHECK}" ]]; then
@@ -59,7 +70,7 @@ checkRequirements() {
   # The sudo command is required to switch to postgres user for DB setup
   if ! command -v sudo 1>>"${ERROR_LOG}" 2>"${ERROR_LOG}"; then
     echo ""
-    echo "This script requires sudo which could not be found."
+    echo "This script requires sudo and could not be found."
     echo "Please install the sudo package."
     echo ""
     exit "${E_BASH}"
@@ -68,7 +79,7 @@ checkRequirements() {
   # The timeout command is required to testing the availability of the web application
   if ! command -v timeout 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"; then
     echo ""
-    echo "This script requires timeout which could not be found."
+    echo "This script requires timeout and could not be found."
     echo "Please install the coreutils package."
     echo ""
     exit "${E_BASH}"
@@ -148,16 +159,16 @@ checkError() {
 }
 
 prepare() {
-  echo "Authenticate with sudo                ... "
+  echo -n "👮 Authenticate with sudo                ... "
   sudo echo -n "" 2>>"${ERROR_LOG}"
   checkError "${?}"
-  echo -n "Update APT cache                      ... "
+  echo -n "📦 Update APT cache                      ... "
   sudo apt-get update 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
   checkError "${?}"
 
   # Ensure curl, gnupg2 abd apt-transport-https is available
-  echo -n "Install dependencies                  ... "
-  sudo apt-get -y install gnupg2 curl apt-transport-https 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
+  echo -n "📦 Install dependencies                  ... "
+  sudo apt-get -y install gnupg2 curl apt-transport-https lsb-release 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
   checkError "${?}"
 }
 
@@ -165,13 +176,12 @@ prepare() {
 # Helper to request Postgres credentials to initialize the
 # OpenNMS database.
 queryDbCredentials() {
-  echo ""
-  echo "Set a Postgres root password"
-  echo ""
+  echo "👩‍💻 Enter credentials for the database and connection"
+  echo "   Set a Postgres root password"
   while true; do
-    read -r -s -p "New postgres password: " POSTGRES_PASS
+    read -r -s -p "   New postgres password: " POSTGRES_PASS
     echo ""
-    read -r -s -p "Confirm postgres password: " POSTGRES_PASS_CONFIRM
+    read -r -s -p "   Confirm postgres password: " POSTGRES_PASS_CONFIRM
     echo ""
     if [ ! -z "${POSTGRES_PASS}" ]; then
       [ "${POSTGRES_PASS}" = "${POSTGRES_PASS_CONFIRM}" ] && break
@@ -183,16 +193,15 @@ queryDbCredentials() {
   done
   echo ""
   echo ""
-  echo "Create OpenNMS Horizon database with user credentials"
-  echo ""
-  read -r -p    "Database name for OpenNMS Horizon (default: opennms): " DB_NAME
+  echo "👩‍💻 Create OpenNMS Horizon database with user credentials"
+  read -r -p "   Set database name for OpenNMS Horizon (default: opennms): " DB_NAME
   DB_NAME="${DB_NAME:-opennms}"
-  read -r -p    "User for the database (default: opennms): " DB_USER
+  read -r -p "   User for the database (default: opennms): " DB_USER
   DB_USER="${DB_USER:-opennms}"
   while true; do
-    read -r -s -p "New password: " DB_PASS
+    read -r -s -p "   New password: " DB_PASS
     echo ""
-    read -r -s -p "Confirm password: " DB_PASS_CONFIRM
+    read -r -s -p "   Confirm password: " DB_PASS_CONFIRM
     echo ""
     if [ ! -z "${DB_PASS}" ]; then
       [ "${DB_PASS}" = "${DB_PASS_CONFIRM}" ] && break
@@ -206,16 +215,23 @@ queryDbCredentials() {
 }
 
 setDbCredentials() {
-  echo -n "Enable SCRAM-SHA-256 in PostgreSQL    ... "
+  echo -n "✨ Enable SCRAM-SHA-256 in PostgreSQL    ... "
   sudo -i -u postgres psql -c "ALTER SYSTEM SET password_encryption = 'scram-sha-256';" 1>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
   checkError "${?}"
-  echo -n "Restart PostgreSQL Server             ... "
+  echo -n "🔄 Restart PostgreSQL Server             ... "
   sudo systemctl restart postgresql 1>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
   checkError "${?}"
-  echo -n "Create database and users             ... "
+  echo -n "👩‍🔧 Create database and users             ... "
   {
-    sudo -i -u postgres psql -c "ALTER USER postgres WITH PASSWORD '${POSTGRES_PASS}';"
-    sudo -i -u postgres psql -c "CREATE USER ${DB_USER} WITH PASSWORD '${DB_PASS}';"
+    # Escape single quotes in password for safe SQL usage
+    ESCAPED_DBUSER_PASS="${DB_PASS//\'/\'\'}"
+    ESCAPED_POSTGRES_PASS="${POSTGRES_PASS//\'/\'\'}"
+    sudo -i -u postgres psql <<EOF
+ALTER ROLE postgres WITH PASSWORD '$ESCAPED_POSTGRES_PASS';
+EOF
+    sudo -i -u postgres psql <<EOF
+CREATE USER ${DB_USER} WITH PASSWORD '$ESCAPED_DBUSER_PASS';
+EOF
     sudo -i -u postgres psql -c "GRANT CREATE ON SCHEMA public TO PUBLIC;"
     sudo -i -u postgres psql -c "CREATE DATABASE ${DB_NAME} WITH OWNER ${DB_USER} ENCODING UTF8 TEMPLATE template0;"
   } 1>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
@@ -226,7 +242,7 @@ setDbCredentials() {
 # Install OpenJDK Development kit
 installJdk() {
   # Test if a OpenJDK 17 Development Kit is installed
-  echo -n "Install OpenJDK Development Kit       ... "
+  echo -n "📦 Install OpenJDK Development Kit       ... "
   if ! apt list --installed 2>>"${ERROR_LOG}" | grep "${REQUIRED_JDK}" 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"; then
     sudo apt-get install -y --no-install-recommends ${REQUIRED_JDK} 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
     checkError "${?}"
@@ -238,24 +254,24 @@ installJdk() {
 ####
 # Install the PostgreSQL database
 installPostgres() {
-  echo -n "Add PostgreSQL repository key         ... "
+  echo -n "📦 Add PostgreSQL repository key         ... "
   curl -1sLf "https://www.postgresql.org/media/keys/ACCC4CF8.asc" | gpg --dearmor | sudo tee "/usr/share/keyrings/postgresql.gpg" 1>/dev/null 2>>"${ERROR_LOG}"
   checkError "${?}"
-  echo -n "Add PostgreSQL repository             ... "
+  echo -n "📦 Add PostgreSQL repository             ... "
   echo "deb [arch=amd64,arm64,ppc64el signed-by=/usr/share/keyrings/postgresql.gpg] http://apt.postgresql.org/pub/repos/apt/ $(lsb_release -cs)-pgdg main" | sudo tee /etc/apt/sources.list.d/postgresql.list 1>/dev/null 2>>"${ERROR_LOG}"
   checkError "${?}"
-  echo -n "Update apt cache                      ... "
+  echo -n "📦 Update apt cache                      ... "
   sudo apt-get update 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
   checkError "${?}"
-  echo -n "Install PostgreSQL database           ... "
-  sudo apt-get install -y postgresql-15 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
+  echo -n "📦 Install PostgreSQL database           ... "
+  sudo apt-get install -y postgresql-${PSQL_MAX_VERSION} 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
   checkError "${?}"
 }
 
 ####
 # Install OpenNMS Debian repository for specific release
 installOnmsRepo() {
-  echo "Install Horizon Repository            ... "
+  echo "📦 Install Horizon Repository            ... "
   curl -1sLf 'https://packages.opennms.com/public/stable/setup.deb.sh' | sudo -E bash
   curl -1sLf 'https://packages.opennms.com/public/common/setup.deb.sh' | sudo -E bash
 }
@@ -263,7 +279,7 @@ installOnmsRepo() {
 ####
 # Install the OpenNMS application from Debian repository
 installOnmsApp() {
-  echo -n "Install OpenNMS Horizon packages      ... "
+  echo -n "📦 Install OpenNMS Horizon packages      ... "
   sudo apt-get install -y -qq rrdtool jrrd2 jicmp jicmp6 opennms opennms-webapp-hawtio 2>>"${ERROR_LOG}"
   sudo -u opennms "${OPENNMS_HOME}"/bin/runjava -s 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
   checkError "${?}"
@@ -274,11 +290,11 @@ installOnmsApp() {
 # Database with credentials
 setCredentials() {
   echo ""
-  echo -n "Create secure vault for Postgres      ... "
+  echo -n "👩‍🔧 Create secure vault for Postgres      ... "
   sudo -u opennms ${OPENNMS_HOME}/bin/scvcli set postgres "${DB_USER}" "${DB_PASS}" 1>/dev/null 2>>"${ERROR_LOG}"
   sudo -u opennms ${OPENNMS_HOME}/bin/scvcli set postgres-admin "${POSTGRES_USER}" "${POSTGRES_PASS}" 1>/dev/null 2>>"${ERROR_LOG}"
   checkError "${?}"
-  echo -n "Generate OpenNMS database config      ... "
+  echo -n "🔧 Generate OpenNMS database config      ... "
   if [[ -f "${OPENNMS_HOME}"/etc/opennms-datasources.xml ]]; then
     printf '<?xml version="1.0" encoding="UTF-8"?>
 <datasource-configuration xmlns:this="http://xmlns.opennms.org/xsd/config/opennms-datasources"
@@ -335,39 +351,32 @@ setCredentials() {
 ####
 # Initialize the OpenNMS database schema
 initializeOnmsDb() {
-  echo -n "Initialize OpenNMS                    ... "
+  echo -n "🔧 Initialize OpenNMS                    ... "
   sudo "${OPENNMS_HOME}"/bin/install -dis 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
-  checkError "${?}"
-  echo -n "Set RRDTool as time series backend    ... "
-  printf 'org.opennms.rrd.strategyClass=org.opennms.netmgt.rrd.rrdtool.MultithreadedJniRrdStrategy
-org.opennms.rrd.interfaceJar=/usr/share/java/jrrd2.jar
-opennms.library.jrrd2=/usr/lib/jni/libjrrd2.so
-org.opennms.web.graphs.engine=rrdtool
-rrd.binary=/usr/bin/rrdtool\n' | sudo -u opennms tee ${OPENNMS_HOME}/etc/opennms.properties.d/rrdtool-backend.properties 1>>/dev/null 2>>"${ERROR_LOG}"
   checkError "${?}"
 }
 
 restartOnms() {
-  echo -n "Starting OpenNMS                      ... "
+  echo -n "🚀 Starting OpenNMS                      ... "
   sudo systemctl start opennms 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
   checkError "${?}"
-  echo -n "OpenNMS systemd enable                ... "
+  echo -n "🚀 OpenNMS systemd enable                ... "
   sudo systemctl enable opennms 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
   checkError "${?}"
 }
 
 lockdownDbUser() {
-  echo -n "PostgreSQL revoke super user role     ... "
+  echo -n "👮 PostgreSQL revoke super user role     ... "
   sudo -i -u postgres psql -c "ALTER ROLE \"${DB_USER}\" NOSUPERUSER;" 1>>"${ERROR_LOG}" 2>>${ERROR_LOG}
   checkError "${?}"
-  echo -n "PostgreSQL revoke create db role      ... "
+  echo -n "👮 PostgreSQL revoke create db role      ... "
   sudo -i -u postgres psql -c "ALTER ROLE \"${DB_USER}\" NOCREATEDB;" 1>>"${ERROR_LOG}" 2>>${ERROR_LOG}
   checkError "${?}"
 }
 
 # Disable the repo and lock the versions.
 disableRepo() {
-  echo -n "Disabling autoupdates                 ... "
+  echo -n "👮 Disabling autoupdates                 ... "
   sudo apt-mark hold libopennms-java \
     libopennmsdeps-java \
     opennms \
@@ -382,8 +391,8 @@ disableRepo() {
 
 # Wait 20 seconds for OpenNMS to start.
 waitForStart() {
-  echo -n "Wait for the Web UI (timeout 2m)      ... "
-  timeout 120s bash -c 'until curl -f -I -L http://${IP_ADDRESS}:8980; do sleep 1; done' 1>/dev/null 2>/dev/null
+  echo -n "🛌 Wait for the Web UI (timeout 2m)      ... "
+  timeout 180s bash -c 'until curl -f -I -L http://${IP_ADDRESS}:8980; do sleep 1; done' 1>/dev/null 2>/dev/null
   checkError "${?}"
 }
 
@@ -392,9 +401,9 @@ clear
 checkRequirements
 showDisclaimer
 prepare
+queryDbCredentials
 installJdk
 installPostgres
-queryDbCredentials
 setDbCredentials
 installOnmsRepo
 installOnmsApp
