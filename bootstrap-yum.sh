@@ -245,7 +245,7 @@ EOF
 # Install the PostgreSQL database
 installPostgres() {
   echo "📦 Add PostgreSQL repository             ... "
-  sudo dnf install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-${OS_MAJOR_VERSION}-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+  sudo dnf install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-${OS_MAJOR_VERSION}-x86_64/pgdg-redhat-repo-latest.noarch.rpm 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
   checkError "${?}"
   echo -n "📦 Install PostgreSQL ${PSQL_MAX_VERSION} database        ... "
   sudo dnf install -y postgresql${PSQL_MAX_VERSION}-server 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
@@ -255,9 +255,9 @@ installPostgres() {
 ####
 # Install OpenNMS rpm repository for specific release
 installOnmsRepo() {
-  echo "📦 Install OpenNMS Repository            ... "
-  sudo dnf -y install https://yum.opennms.org/repofiles/opennms-repo-stable-rhel9.noarch.rpm
-  sudo sed -i 's/gpgcheck=1/gpgcheck=0/g' /etc/yum.repos.d/opennms-repo-stable-rhel9.repo
+  echo -n "📦 Install OpenNMS Repository            ... "
+  sudo dnf -y install https://yum.opennms.org/repofiles/opennms-repo-stable-rhel9.noarch.rpm 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
+  checkError "${?}"
 }
 
 ####

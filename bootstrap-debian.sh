@@ -242,17 +242,17 @@ EOF
 ####
 # Install Temurin 17 Java Development Kit
 installJdk() {
-  echo -n "📦 Add Temurin repository key         ... "
+  echo -n "📦 Add Temurin repository key            ... "
   curl -1sLf "https://packages.adoptium.net/artifactory/api/gpg/key/public" | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/adoptium.gpg 1>/dev/null 2>>"${ERROR_LOG}"
   checkError "${?}"
-  echo -n "📦 Add Temurin repository             ... "
+  echo -n "📦 Add Temurin repository                ... "
   echo "deb https://packages.adoptium.net/artifactory/deb $(awk -F= '/^VERSION_CODENAME/{print$2}' /etc/os-release) main" | sudo tee /etc/apt/sources.list.d/adoptium.list 1>/dev/null 2>>"${ERROR_LOG}"
   checkError "${?}"
-  echo -n "📦 Update apt cache                   ... "
+  echo -n "📦 Update apt cache                      ... "
   sudo apt-get update 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
   checkError "${?}"
   # Test if a Temuring 17 Java Development Kit is installed
-  echo -n "📦 Install Temurin 17 JDK             ... "
+  echo -n "📦 Install Temurin 17 JDK                ... "
   if ! apt list --installed 2>>"${ERROR_LOG}" | grep "${REQUIRED_JDK}" 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"; then
     sudo apt-get install -y --no-install-recommends ${REQUIRED_JDK} 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
     checkError "${?}"
@@ -281,9 +281,15 @@ installPostgres() {
 ####
 # Install OpenNMS Debian repository for specific release
 installOnmsRepo() {
-  echo "📦 Install Horizon Repository            ... "
-  curl -1sLf 'https://packages.opennms.com/public/stable/setup.deb.sh' | sudo -E bash
-  curl -1sLf 'https://packages.opennms.com/public/common/setup.deb.sh' | sudo -E bash
+  echo -n "📦 Add OpenNMS repository key            ... "
+  curl -fsSL https://debian.opennms.org/OPENNMS-GPG-KEY | sudo gpg --dearmor -o /usr/share/keyrings/opennms.gpg 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
+  checkError "${?}"
+  echo -n "📦 Install Horizon Repository            ... "
+  echo "deb [signed-by=/usr/share/keyrings/opennms.gpg] https://debian.opennms.org stable main" | sudo tee /etc/apt/sources.list.d/opennms.list 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
+  checkError "${?}"
+  echo -n "📦 Update apt cache                      ... "
+  sudo apt-get update 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
+  checkError "${?}"
 }
 
 ####
