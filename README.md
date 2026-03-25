@@ -1,3 +1,5 @@
+![Alt](https://repobeats.axiom.co/api/embed/4b0810273f8add2b2bb65098f840a29d66932b70.svg "Repobeats analytics image")
+
 # 🚀 OpenNMS Quick Installer ✨
 
 This script is a convenient bootstrap script to install OpenNMS on Debian or CentOS systems.
