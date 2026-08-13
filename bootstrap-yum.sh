@@ -82,7 +82,7 @@ showDisclaimer() {
   echo "components:"
   echo ""
   echo " - Installing curl"
-  echo " - Eclipse Adoptium Temurin JDK 21"
+  echo " - Eclipse Adoptium Temurin JDK ${REQUIRED_JDK}"
   echo " - PostgreSQL Server"
   echo " - Initializing database access with credentials"
   echo " - OpenNMS Repositories"
@@ -225,13 +225,15 @@ EOF
 }
 
 ####
-# Install Eclipse Adoptium Temurin JDK 21
+# Install Eclipse Adoptium Temurin JDK
 installJdk() {
   echo "📦 Adding Adoptium Repo                  ... "
+  # Use the OS major version: Adoptium only publishes per-major repos, and
+  # $releasever expands to e.g. 9.6 on RHEL EUS/RHUI systems, which 404s.
   cat <<EOF | sudo tee /etc/yum.repos.d/adoptium.repo > /dev/null
 [Adoptium]
 name=Adoptium
-baseurl=https://packages.adoptium.net/artifactory/rpm/centos/\$releasever/\$basearch
+baseurl=https://packages.adoptium.net/artifactory/rpm/centos/${OS_MAJOR_VERSION}/\$basearch
 enabled=1
 gpgcheck=1
 gpgkey=https://packages.adoptium.net/artifactory/api/gpg/key/public

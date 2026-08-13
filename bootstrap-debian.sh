@@ -21,7 +21,7 @@ GREEN="\e[32m"
 ENDCOLOR="\e[0m"
 
 REQUIRED_SYSTEMS="Ubuntu|Debian"
-REQUIRED_JDK="temurin-21-jdk"
+REQUIRED_JDK="21"
 PSQL_MAX_VERSION=15
 IP_ADDRESS=$(hostname -I | awk '{print $1}') # export the address so it can also be used in the timeout command
 
@@ -55,12 +55,7 @@ checkRequirements() {
   fi
 
   # Test if system is supported
-  DISTRO_CHECK="$(command -v lsb_release 2>>"${ERROR_LOG}")"
-  if [[ -z "${DISTRO_CHECK}" ]]; then
-    DISTRO_CHECK="$(command -v uname)"
-  fi
-
-  if ! "${DISTRO_CHECK}" -a | grep -E "${REQUIRED_SYSTEMS}" 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}" && [[ ! -e /etc/debian_version ]]; then
+  if ! lsb_release -a | grep -E "${REQUIRED_SYSTEMS}" 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}" && [[ ! -e /etc/debian_version ]]; then
     echo ""
     echo "This is system is not a supported Ubuntu or Debian system."
     echo ""
@@ -92,7 +87,7 @@ showDisclaimer() {
   echo "components:"
   echo ""
   echo " - Installing installer dependencies curl, gnupg2, apt-transport-https"
-  echo " - Eclipse Adoptium Temurin JDK 21"
+  echo " - Eclipse Adoptium Temurin JDK ${REQUIRED_JDK}"
   echo " - PostgreSQL Server"
   echo " - Initializing database access with credentials"
   echo " - OpenNMS Repositories"
@@ -239,24 +234,36 @@ EOF
 }
 
 ####
-# Install Eclipse Adoptium Temurin JDK 21
+# Install Eclipse Adoptium Temurin JDK
 installJdk() {
-  echo -n "📦 Add Adoptium repository key          ... "
+  if dpkg -s "temurin-${REQUIRED_JDK}-jdk" 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"; then
+    echo "📦 Install Temurin Java Development Kit  ... [ SKIP ] Already installed"
+    return
+  fi
+  DEB_CODENAME="$(lsb_release -cs)"
+  echo -n "📦 Check Adoptium supports your system   ... "
+  if ! curl -1sLf -o /dev/null "https://packages.adoptium.net/artifactory/deb/dists/${DEB_CODENAME}/Release" 2>>"${ERROR_LOG}"; then
+    echo -e "[ ${RED}FAILED${ENDCOLOR} ]"
+    echo ""
+    echo "The Adoptium apt repository does not publish packages for '${DEB_CODENAME}'."
+    echo "See https://packages.adoptium.net/artifactory/deb/dists/ for supported"
+    echo "releases, or install a Temurin ${REQUIRED_JDK} JDK manually and re-run this script."
+    echo ""
+    exit "${E_UNSUPPORTED}"
+  fi
+  echo -e "[ ${GREEN}OK${ENDCOLOR} ]"
+  echo -n "📦 Add Adoptium repository key           ... "
   curl -1sLf "https://packages.adoptium.net/artifactory/api/gpg/key/public" | gpg --dearmor | sudo tee "/usr/share/keyrings/adoptium.gpg" 1>/dev/null 2>>"${ERROR_LOG}"
   checkError "${?}"
-  echo -n "📦 Add Adoptium repository              ... "
-  echo "deb [signed-by=/usr/share/keyrings/adoptium.gpg] https://packages.adoptium.net/artifactory/deb $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/adoptium.list 1>/dev/null 2>>"${ERROR_LOG}"
+  echo -n "📦 Add Adoptium repository               ... "
+  echo "deb [signed-by=/usr/share/keyrings/adoptium.gpg] https://packages.adoptium.net/artifactory/deb ${DEB_CODENAME} main" | sudo tee /etc/apt/sources.list.d/adoptium.list 1>/dev/null 2>>"${ERROR_LOG}"
   checkError "${?}"
-  echo -n "📦 Update APT cache                      ... "
+  echo -n "📦 Update apt cache                      ... "
   sudo apt-get update 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
   checkError "${?}"
   echo -n "📦 Install Temurin Java Development Kit  ... "
-  if ! apt list --installed 2>>"${ERROR_LOG}" | grep "${REQUIRED_JDK}" 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"; then
-    sudo apt-get install -y --no-install-recommends "${REQUIRED_JDK}" 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
-    checkError "${?}"
-  else
-    echo "[ SKIP ] Already installed"
-  fi
+  sudo apt-get install -y --no-install-recommends "temurin-${REQUIRED_JDK}-jdk" 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
+  checkError "${?}"
 }
 
 ####
