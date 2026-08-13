@@ -28,7 +28,11 @@ case "${SCRIPT}" in
     PG_SERVICE="postgresql"
     ;;
   bootstrap-yum.sh)
-    PREREQS="dnf install -y systemd sudo hostname && dnf clean all"
+    # chmod /etc/shadow: EL ships it with mode 0000, so unix_chkpwd needs
+    # CAP_DAC_OVERRIDE, which the Ubuntu host's AppArmor unix-chkpwd profile
+    # denies inside containers and sudo fails with a PAM error. Mode 0640
+    # lets root read it without the capability.
+    PREREQS="dnf install -y systemd sudo hostname && dnf clean all && chmod 0640 /etc/shadow"
     # The EL unit name carries the version; derive it from the script so a
     # version bump there cannot drift from this check.
     PG_SERVICE="postgresql-$(sed -n 's/^PSQL_MAX_VERSION=//p' bootstrap-yum.sh)"
