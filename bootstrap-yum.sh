@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 #
+# Copyright 2026 Ronny Trommer <ronny@no42.org>
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
 # Script to bootstrap a basic OpenNMS setup
 
 set -eEuo pipefail
@@ -21,7 +24,7 @@ YELLOW="\e[33m"
 ENDCOLOR="\e[0m"
 SUPPORTED_DISTROS="RHEL 9/10, CentOS 9/10, Rocky 9/10, Alma 9/10"
 REQUIRED_SYSTEMS="^(Red Hat Enterprise Linux|Rocky Linux|CentOS Stream|AlmaLinux) release 9([.][0-9]+)?|10([.][0-9]+)? \(.+\)$"
-REQUIRED_JDK="17"
+REQUIRED_JDK="21"
 RELEASE_FILE="/etc/redhat-release"
 OS_MAJOR_VERSION=$(grep -oE '[0-9]+' /etc/redhat-release | head -1)
 PSQL_MAX_VERSION=15
@@ -82,7 +85,7 @@ showDisclaimer() {
   echo "components:"
   echo ""
   echo " - Installing curl"
-  echo " - OpenJDK Development Kit"
+  echo " - Eclipse Adoptium Temurin JDK ${REQUIRED_JDK}"
   echo " - PostgreSQL Server"
   echo " - Initializing database access with credentials"
   echo " - OpenNMS Repositories"
@@ -225,13 +228,15 @@ EOF
 }
 
 ####
-# Install OpenJDK Development kit
+# Install Eclipse Adoptium Temurin JDK
 installJdk() {
   echo "📦 Adding Adoptium Repo                  ... "
+  # Use the OS major version: Adoptium only publishes per-major repos, and
+  # $releasever expands to e.g. 9.6 on RHEL EUS/RHUI systems, which 404s.
   cat <<EOF | sudo tee /etc/yum.repos.d/adoptium.repo > /dev/null
 [Adoptium]
 name=Adoptium
-baseurl=https://packages.adoptium.net/artifactory/rpm/centos/\$releasever/\$basearch
+baseurl=https://packages.adoptium.net/artifactory/rpm/centos/${OS_MAJOR_VERSION}/\$basearch
 enabled=1
 gpgcheck=1
 gpgkey=https://packages.adoptium.net/artifactory/api/gpg/key/public
@@ -245,7 +250,7 @@ EOF
 # Install the PostgreSQL database
 installPostgres() {
   echo "📦 Add PostgreSQL repository             ... "
-  sudo dnf install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-${OS_MAJOR_VERSION}-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+  sudo dnf install -y "https://download.postgresql.org/pub/repos/yum/reporpms/EL-${OS_MAJOR_VERSION}-x86_64/pgdg-redhat-repo-latest.noarch.rpm"
   checkError "${?}"
   echo -n "📦 Install PostgreSQL ${PSQL_MAX_VERSION} database        ... "
   sudo dnf install -y postgresql${PSQL_MAX_VERSION}-server 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
