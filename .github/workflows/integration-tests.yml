@@ -1,0 +1,49 @@
+# Copyright 2026 Ronny Trommer <ronny@no42.org>
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+name: Integration Tests
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  integration-test:
+    name: "${{ matrix.distro }}"
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - distro: "Debian 13 (Trixie)"
+            image: "debian:trixie"
+            script: "bootstrap-debian.sh"
+          - distro: "Ubuntu 24.04 LTS"
+            image: "ubuntu:24.04"
+            script: "bootstrap-debian.sh"
+          - distro: "CentOS Stream 9"
+            image: "quay.io/centos/centos:stream9"
+            script: "bootstrap-yum.sh"
+          - distro: "CentOS Stream 10"
+            image: "quay.io/centos/centos:stream10"
+            script: "bootstrap-yum.sh"
+          - distro: "AlmaLinux 9"
+            image: "almalinux:9"
+            script: "bootstrap-yum.sh"
+          - distro: "AlmaLinux 10"
+            image: "almalinux:10"
+            script: "bootstrap-yum.sh"
+          - distro: "Rocky Linux 9"
+            image: "rockylinux/rockylinux:9"
+            script: "bootstrap-yum.sh"
+          - distro: "Rocky Linux 10"
+            image: "rockylinux/rockylinux:10"
+            script: "bootstrap-yum.sh"
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+
+      - name: Run integration test
+        run: make integration-test IMAGE="${{ matrix.image }}" SCRIPT="${{ matrix.script }}"
