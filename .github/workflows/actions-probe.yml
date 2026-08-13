@@ -3,6 +3,8 @@
 name: Actions Probe
 on:
   push:
+  pull_request:
+    branches: [ "main" ]
 jobs:
   probe:
     runs-on: ubuntu-latest
