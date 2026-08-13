@@ -424,7 +424,10 @@ lockdownDbUser() {
 # Disable the repo and lock the versions. 
 disableRepo() {
   echo -n "👮 Disabling autoupdates                 ... "
-  sudo dnf config-manager --disable opennms-repo-stable-*
+  # Rocky 10 ships dnf5 without the config-manager plugin; fall back to
+  # disabling the repo file directly.
+  sudo dnf config-manager --disable "opennms-repo-stable-*" 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}" \
+    || sudo sed -i 's/^enabled=1/enabled=0/' /etc/yum.repos.d/opennms-repo-stable-*.repo 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
   checkError "${?}"
 }
 
