@@ -21,7 +21,7 @@ YELLOW="\e[33m"
 ENDCOLOR="\e[0m"
 SUPPORTED_DISTROS="RHEL 9/10, CentOS 9/10, Rocky 9/10, Alma 9/10"
 REQUIRED_SYSTEMS="^(Red Hat Enterprise Linux|Rocky Linux|CentOS Stream|AlmaLinux) release 9([.][0-9]+)?|10([.][0-9]+)? \(.+\)$"
-REQUIRED_JDK="17"
+REQUIRED_JDK="21"
 RELEASE_FILE="/etc/redhat-release"
 OS_MAJOR_VERSION=$(grep -oE '[0-9]+' /etc/redhat-release | head -1)
 PSQL_MAX_VERSION=15
@@ -82,7 +82,7 @@ showDisclaimer() {
   echo "components:"
   echo ""
   echo " - Installing curl"
-  echo " - OpenJDK Development Kit"
+  echo " - Eclipse Adoptium Temurin JDK 21"
   echo " - PostgreSQL Server"
   echo " - Initializing database access with credentials"
   echo " - OpenNMS Repositories"
@@ -225,7 +225,7 @@ EOF
 }
 
 ####
-# Install OpenJDK Development kit
+# Install Eclipse Adoptium Temurin JDK 21
 installJdk() {
   echo "📦 Adding Adoptium Repo                  ... "
   cat <<EOF | sudo tee /etc/yum.repos.d/adoptium.repo > /dev/null
@@ -245,7 +245,7 @@ EOF
 # Install the PostgreSQL database
 installPostgres() {
   echo "📦 Add PostgreSQL repository             ... "
-  sudo dnf install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-${OS_MAJOR_VERSION}-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+  sudo dnf install -y "https://download.postgresql.org/pub/repos/yum/reporpms/EL-${OS_MAJOR_VERSION}-x86_64/pgdg-redhat-repo-latest.noarch.rpm"
   checkError "${?}"
   echo -n "📦 Install PostgreSQL ${PSQL_MAX_VERSION} database        ... "
   sudo dnf install -y postgresql${PSQL_MAX_VERSION}-server 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"

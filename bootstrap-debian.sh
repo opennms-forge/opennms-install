@@ -21,7 +21,7 @@ GREEN="\e[32m"
 ENDCOLOR="\e[0m"
 
 REQUIRED_SYSTEMS="Ubuntu|Debian"
-REQUIRED_JDK="openjdk-17-jdk"
+REQUIRED_JDK="temurin-21-jdk"
 PSQL_MAX_VERSION=15
 IP_ADDRESS=$(hostname -I | awk '{print $1}') # export the address so it can also be used in the timeout command
 
@@ -55,7 +55,7 @@ checkRequirements() {
   fi
 
   # Test if system is supported
-  DISTRO_CHECK="$(command -v lsb_release 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}")"
+  DISTRO_CHECK="$(command -v lsb_release 2>>"${ERROR_LOG}")"
   if [[ -z "${DISTRO_CHECK}" ]]; then
     DISTRO_CHECK="$(command -v uname)"
   fi
@@ -92,7 +92,7 @@ showDisclaimer() {
   echo "components:"
   echo ""
   echo " - Installing installer dependencies curl, gnupg2, apt-transport-https"
-  echo " - OpenJDK Development Kit"
+  echo " - Eclipse Adoptium Temurin JDK 21"
   echo " - PostgreSQL Server"
   echo " - Initializing database access with credentials"
   echo " - OpenNMS Repositories"
@@ -239,12 +239,20 @@ EOF
 }
 
 ####
-# Install OpenJDK Development kit
+# Install Eclipse Adoptium Temurin JDK 21
 installJdk() {
-  # Test if a OpenJDK 17 Development Kit is installed
-  echo -n "📦 Install OpenJDK Development Kit       ... "
+  echo -n "📦 Add Adoptium repository key          ... "
+  curl -1sLf "https://packages.adoptium.net/artifactory/api/gpg/key/public" | gpg --dearmor | sudo tee "/usr/share/keyrings/adoptium.gpg" 1>/dev/null 2>>"${ERROR_LOG}"
+  checkError "${?}"
+  echo -n "📦 Add Adoptium repository              ... "
+  echo "deb [signed-by=/usr/share/keyrings/adoptium.gpg] https://packages.adoptium.net/artifactory/deb $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/adoptium.list 1>/dev/null 2>>"${ERROR_LOG}"
+  checkError "${?}"
+  echo -n "📦 Update APT cache                      ... "
+  sudo apt-get update 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
+  checkError "${?}"
+  echo -n "📦 Install Temurin Java Development Kit  ... "
   if ! apt list --installed 2>>"${ERROR_LOG}" | grep "${REQUIRED_JDK}" 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"; then
-    sudo apt-get install -y --no-install-recommends ${REQUIRED_JDK} 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
+    sudo apt-get install -y --no-install-recommends "${REQUIRED_JDK}" 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
     checkError "${?}"
   else
     echo "[ SKIP ] Already installed"
