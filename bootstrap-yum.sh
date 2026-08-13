@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 #
+# Copyright 2026 Ronny Trommer <ronny@no42.org>
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
 # Script to bootstrap a basic OpenNMS setup
 
 set -eEuo pipefail
