@@ -29,7 +29,7 @@ jobs:
 
       - name: Install actionlint
         run: |
-          bash <(curl -sSfL https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash) 1.7.12
+          bash <(curl -sSfL https://raw.githubusercontent.com/rhysd/actionlint/v1.7.12/scripts/download-actionlint.bash) 1.7.12
           sudo mv ./actionlint /usr/local/bin/actionlint
 
       - name: Run linters
@@ -76,3 +76,20 @@ jobs:
 
       - name: Run integration test
         run: make integration-test IMAGE="${{ matrix.image }}" SCRIPT="${{ matrix.script }}"
+
+  # Single aggregate check for branch protection: requiring this one context
+  # survives matrix renames and additions.
+  gate:
+    name: "Gate"
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    needs: [lint, integration-test]
+    if: always()
+    steps:
+      - name: Fail unless all gated jobs succeeded
+        run: |
+          echo "lint: ${{ needs.lint.result }}"
+          echo "integration-test: ${{ needs.integration-test.result }}"
+          if [ "${{ needs.lint.result }}" != "success" ] || [ "${{ needs.integration-test.result }}" != "success" ]; then
+            exit 1
+          fi
