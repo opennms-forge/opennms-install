@@ -8,7 +8,7 @@ The script executes the steps documented in [Installation and Configuration guid
 The script is tested with:
 
 * Ubuntu 24.04 (Noble Numbat) x86_64
-* Debian 12 (Bookworm) x86_64
+* Debian 13 (Trixie) x86_64
 * CentOS Stream 9/10 x86_64
 * Rocky Linux 9/10 x86_64
 * AlmaLinux 9/10 x86_64
