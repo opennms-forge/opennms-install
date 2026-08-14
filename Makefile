@@ -4,6 +4,11 @@
 IMAGE ?= debian:trixie
 SCRIPT ?= bootstrap-debian.sh
 
+.PHONY: lint
+lint:
+	shellcheck -S warning bootstrap-debian.sh bootstrap-yum.sh tests/integration-test.sh
+	actionlint
+
 .PHONY: integration-test
 integration-test:
 	tests/integration-test.sh "$(IMAGE)" "$(SCRIPT)"
