@@ -28,4 +28,4 @@ CI (`integration-tests.yml`) runs lint plus an 8-distro matrix; branch protectio
 - OpenNMS `scvcli` uses the bashism `$(<java.conf)` under `#!/bin/sh` and breaks on dash; `bootstrap-debian.sh` must invoke it via `bash`.
 - EL minimal images ship `curl-minimal`, which conflicts with `curl`; keep `--allowerasing`.
 - Debian/Ubuntu library images have no systemd; the harness builds a throwaway image layering it in and boots with `--privileged --cgroupns=host`.
-- `dnf config-manager` is unavailable on EL10 images (no dnf-plugins-core); the scripts fall back to sed on the repo file.
+- `dnf config-manager` is missing on some EL10 images (Rocky 10 ships dnf5 without the plugin); the scripts fall back to sed on the repo file.
