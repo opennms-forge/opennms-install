@@ -33,12 +33,11 @@ The two pins bump independently: Horizon on its release cadence (second Wednesda
 
 ## Verifying artifacts
 
-Verify the checksums file signature and then the scripts against it:
+Verify the checksums file signature (cosign v3 sigstore bundle) and then the scripts against it:
 
 ```bash
 cosign verify-blob \
-  --certificate SHA256SUMS.pem \
-  --signature SHA256SUMS.sig \
+  --bundle SHA256SUMS.sigstore.json \
   --certificate-identity-regexp 'https://github.com/opennms-forge/opennms-install/\.github/workflows/release\.yml@refs/tags/v.*' \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com \
   SHA256SUMS
