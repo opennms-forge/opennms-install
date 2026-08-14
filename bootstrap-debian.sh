@@ -335,7 +335,7 @@ installOnmsApp() {
   # --no-install-recommends: opennms recommends openjdk-21, which apt would
   # install next to the Temurin JDK because temurin-21-jdk does not provide
   # any name in the recommends list, see issue #48.
-  sudo apt-get install -y -qq --no-install-recommends rrdtool jrrd2 jicmp jicmp6 opennms="${ONMS_VERSION}-1" opennms-webapp-hawtio="${ONMS_VERSION}-1" 2>>"${ERROR_LOG}"
+  sudo apt-get install -y -qq --no-install-recommends rrdtool jrrd2 jicmp jicmp6 opennms="${ONMS_VERSION}-*" opennms-webapp-hawtio="${ONMS_VERSION}-*" 2>>"${ERROR_LOG}"
   sudo -u opennms "${OPENNMS_HOME}"/bin/runjava -s 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
   checkError "${?}"
 }
