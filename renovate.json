@@ -1,9 +1,9 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "description": "Scoped to the certified-combo Horizon pin only; Dependabot handles github-actions updates.",
+  "description": "Scoped to the certified-combo Horizon pin only; Dependabot handles github-actions updates. Schedule: Renovate cron uses AND semantics for day-of-month and day-of-week, so '* * 8-14 * 3' is exactly the second Wednesday of the month, the Horizon release day. If a release slips past the window, trigger a run from the Dependency Dashboard.",
   "enabledManagers": ["custom.regex"],
   "labels": ["dependencies"],
-  "schedule": ["before 8am on monday"],
+  "schedule": ["* * 8-14 * 3"],
   "customManagers": [
     {
       "customType": "regex",
