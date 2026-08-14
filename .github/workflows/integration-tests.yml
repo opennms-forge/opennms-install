@@ -45,7 +45,8 @@ jobs:
 
   integration-test:
     name: "${{ matrix.distro }}"
-    runs-on: ubuntu-24.04
+    # Entries default to amd64; the ARM64 legs override via matrix.runner.
+    runs-on: ${{ matrix.runner || 'ubuntu-24.04' }}
     timeout-minutes: 30
     needs: lint
     strategy:
@@ -76,6 +77,16 @@ jobs:
           - distro: "Rocky Linux 10"
             image: "rockylinux/rockylinux:10"
             script: "bootstrap-yum.sh"
+          # One ARM64 leg per script family (issue #46): Ubuntu/deb is the
+          # original #45 jrrd2 failure case, AlmaLinux 10 represents EL.
+          - distro: "Ubuntu 24.04 LTS (ARM64)"
+            image: "ubuntu:24.04"
+            script: "bootstrap-debian.sh"
+            runner: "ubuntu-24.04-arm"
+          - distro: "AlmaLinux 10 (ARM64)"
+            image: "almalinux:10"
+            script: "bootstrap-yum.sh"
+            runner: "ubuntu-24.04-arm"
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
