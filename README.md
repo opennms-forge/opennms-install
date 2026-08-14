@@ -12,13 +12,15 @@ This script is a convenient bootstrap script to install OpenNMS on Debian or Cen
 The script executes the steps documented in [Installation and Configuration guide](https://docs.opennms.com/horizon/latest/deployment/core/getting-started.html).
 
 The scripts install a certified combination, shown in the badges above: the pinned OpenNMS Horizon and PostgreSQL versions are exactly what the CI matrix validates.
-The certified combo is tested on:
+The certified combo is tested on, each on x86_64 and arm64:
 
-* Ubuntu 24.04 (Noble Numbat) x86_64
-* Debian 13 (Trixie) x86_64
-* CentOS Stream 9/10 x86_64
-* Rocky Linux 9/10 x86_64
-* AlmaLinux 9/10 x86_64
+* Ubuntu 24.04 (Noble Numbat)
+* Debian 13 (Trixie)
+* CentOS Stream 9/10
+* Rocky Linux 9/10
+* AlmaLinux 9/10
+
+The OpenNMS package repositories ship arm64 builds of all native packages (jrrd2, jicmp, jicmp6), so the scripts work unmodified on both architectures; the CI matrix verifies every distro on both.
 
 [![asciicast](https://asciinema.org/a/dCzY67dR6Ph07X2XLEdoGe9FC.svg)](https://asciinema.org/a/dCzY67dR6Ph07X2XLEdoGe9FC)
 
