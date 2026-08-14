@@ -41,17 +41,30 @@ We have also started to work on Ansible roles for the Ubuntu-based operating sys
 
 ## 🕹️ Usage
 
-Download the script to your system.
+Download the script for your distro family from the latest release and run it.
 
-Execute on a CentOS-based system
+On an RPM-based system (AlmaLinux, Rocky Linux, CentOS Stream 9/10):
+
 ```bash
+curl -fsSLO https://github.com/opennms-forge/opennms-install/releases/latest/download/bootstrap-yum.sh
 sudo bash bootstrap-yum.sh
 ```
 
-Execute on a Debian-based system
+On a DEB-based system (Debian, Ubuntu):
+
 ```bash
+curl -fsSLO https://github.com/opennms-forge/opennms-install/releases/latest/download/bootstrap-debian.sh
 sudo bash bootstrap-debian.sh
 ```
+
+Optionally, verify the download against the release checksums before running it:
+
+```bash
+curl -fsSLO https://github.com/opennms-forge/opennms-install/releases/latest/download/SHA256SUMS
+sha256sum -c --ignore-missing SHA256SUMS
+```
+
+For full signature and provenance verification with cosign, see [Verifying artifacts](RELEASING.md#verifying-artifacts) in RELEASING.md.
 
 ## 👋 Say hello
 You are very welcome to join us to make this repo a better place.
