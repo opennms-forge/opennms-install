@@ -11,6 +11,11 @@ on:
   # Lets the release workflow reuse these quality gates instead of
   # duplicating them.
   workflow_call:
+  # Weekly expiry alarm for the certified-combo pins: debian.opennms.org
+  # serves only the newest release, so the deb pin breaks when upstream
+  # publishes and this run fails until the pin is bumped.
+  schedule:
+    - cron: "0 6 * * 1"
 
 permissions:
   contents: read

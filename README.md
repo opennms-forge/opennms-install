@@ -5,11 +5,14 @@
 [![Integration Tests](https://github.com/opennms-forge/opennms-install/actions/workflows/integration-tests.yml/badge.svg)](https://github.com/opennms-forge/opennms-install/actions/workflows/integration-tests.yml)
 [![Latest release](https://img.shields.io/github/v/release/opennms-forge/opennms-install)](https://github.com/opennms-forge/opennms-install/releases/latest)
 [![License](https://img.shields.io/github/license/opennms-forge/opennms-install)](LICENSE)
+[![OpenNMS Horizon](https://img.shields.io/badge/OpenNMS_Horizon-36.0.3-4c9d45)](https://docs.opennms.com/horizon/36/releasenotes/whatsnew.html)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-18-336791)](https://docs.opennms.com/horizon/36/deployment/core/system-requirements.html)
 
 This script is a convenient bootstrap script to install OpenNMS on Debian or CentOS systems.
 The script executes the steps documented in [Installation and Configuration guide](https://docs.opennms.com/horizon/latest/deployment/core/getting-started.html).
 
-The script is tested with:
+The scripts install a certified combination, shown in the badges above: the pinned OpenNMS Horizon and PostgreSQL versions are exactly what the CI matrix validates.
+The certified combo is tested on:
 
 * Ubuntu 24.04 (Noble Numbat) x86_64
 * Debian 13 (Trixie) x86_64
@@ -24,7 +27,7 @@ We have also started to work on Ansible roles for the Ubuntu-based operating sys
 
 ## 🎯 Scope
 
-* Bootstrap a single-node OpenNMS system on RPM or DEB-based systems quickly with the latest stable release
+* Bootstrap a single-node OpenNMS system on RPM or DEB-based systems quickly with the certified stable release shown in the badges
 * Installation procedure closely following the best practices from our official docs
 * Scripts don't deal with existing installations or upgrades
 * Scripts don't configure or install Minions, Sentinels, or distributed time series storage like Cortex.

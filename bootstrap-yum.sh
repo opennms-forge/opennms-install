@@ -30,7 +30,10 @@ REQUIRED_SYSTEMS="^(Red Hat Enterprise Linux|Rocky Linux|CentOS Stream|AlmaLinux
 REQUIRED_JDK="21"
 RELEASE_FILE="/etc/redhat-release"
 OS_MAJOR_VERSION=$(grep -oE '[0-9]+' /etc/redhat-release | head -1)
-PSQL_MAX_VERSION=15
+PSQL_VERSION=18
+# OpenNMS Horizon version of the certified combo. Deb and rpm installs pin
+# this exact version; bumping it requires a green CI matrix (re-certification).
+ONMS_VERSION=36.0.3
 IP_ADDRESS=$(hostname -I | awk '{print $1}') # export the address so it can also be used in the timeout command
 
 # Error codes
@@ -229,7 +232,7 @@ setDbCredentials() {
   sudo -i -u postgres psql -c "ALTER SYSTEM SET password_encryption = 'scram-sha-256';" 1>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
   checkError "${?}"
   echo -n "🔄 Restart PostgreSQL Server             ... "
-  sudo systemctl restart postgresql-${PSQL_MAX_VERSION} 1>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
+  sudo systemctl restart postgresql-${PSQL_VERSION} 1>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
   checkError "${?}"
   echo -n "👩‍🔧 Create database and users             ... "
   {
@@ -273,8 +276,8 @@ installPostgres() {
   echo "📦 Add PostgreSQL repository             ... "
   sudo dnf install -y "https://download.postgresql.org/pub/repos/yum/reporpms/EL-${OS_MAJOR_VERSION}-$(uname -m)/pgdg-redhat-repo-latest.noarch.rpm"
   checkError "${?}"
-  echo -n "📦 Install PostgreSQL ${PSQL_MAX_VERSION} database        ... "
-  sudo dnf install -y postgresql${PSQL_MAX_VERSION}-server 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
+  echo -n "📦 Install PostgreSQL ${PSQL_VERSION} database        ... "
+  sudo dnf install -y postgresql${PSQL_VERSION}-server 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
   checkError "${?}"
 }
 
@@ -293,7 +296,7 @@ installOnmsRepo() {
 # Install the OpenNMS application from rpm repository
 installOnmsApp() {
   echo -n "📦 Install OpenNMS Horizon packages      ... "
-  sudo dnf -y install rrdtool jrrd2 jicmp jicmp6 opennms-core opennms-webapp-jetty opennms-webapp-hawtio 1>>"${ERROR_LOG}" 2>>${ERROR_LOG}
+  sudo dnf -y install rrdtool jrrd2 jicmp jicmp6 opennms-core-"${ONMS_VERSION}" opennms-webapp-jetty-"${ONMS_VERSION}" opennms-webapp-hawtio-"${ONMS_VERSION}" 1>>"${ERROR_LOG}" 2>>${ERROR_LOG}
   sudo -u opennms "${OPENNMS_HOME}"/bin/runjava -s 1>>"${ERROR_LOG}" 2>>${ERROR_LOG}
   checkError "${?}"
 }
@@ -365,13 +368,13 @@ setCredentials() {
 # Helper script to initialize the PostgreSQL database
 initializePostgres() {
   echo -n "👩‍🔧 PostgreSQL initialize                 ... "
-  sudo postgresql-${PSQL_MAX_VERSION}-setup initdb 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
+  sudo postgresql-${PSQL_VERSION}-setup initdb 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
   checkError "${?}"
   echo -n "🚀 Start PostgreSQL database             ... "
-  sudo systemctl start postgresql-${PSQL_MAX_VERSION}
+  sudo systemctl start postgresql-${PSQL_VERSION}
   checkError "${?}"
   echo -n "🚀 PostgreSQL systemd enable             ... "
-  sudo systemctl enable postgresql-${PSQL_MAX_VERSION} 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
+  sudo systemctl enable postgresql-${PSQL_VERSION} 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
   checkError "${?}"
 }
 

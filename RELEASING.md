@@ -19,6 +19,18 @@ Prerelease tags (`vX.Y.Z-rc1`) are marked as prereleases automatically and never
 5. Curate the release notes: user-facing highlights and fixes with issue/PR links, breaking changes with a migration path, no raw commit dump, chore/CI noise omitted.
 6. Publish: `gh release edit vX.Y.Z --notes-file notes.md --draft=false`.
 
+## Certified-combo pins
+
+The bootstrap scripts pin a certified combination: `ONMS_VERSION` (OpenNMS Horizon) and `PSQL_VERSION` (PostgreSQL), defined as constants at the top of both scripts and shown as README badges.
+The two pins bump independently: Horizon on its release cadence (second Wednesday of the month), PostgreSQL rarely and only within the window Horizon supports.
+
+- Renovate authors Horizon bump PRs automatically (`renovate.json` watches OpenNMS/opennms releases) and updates both scripts and the README badge with the same version.
+- PostgreSQL bumps are manual: change `PSQL_VERSION` in both scripts and the README badge, and check the new version is inside Horizon's supported range first.
+- `make lint` fails when scripts and badges disagree, so partial bumps cannot merge.
+- A green 8-distro matrix (`Gate`) on the bump PR is the re-certification; merging the PR certifies the new combo.
+- debian.opennms.org serves only the newest release, so the deb pin breaks when upstream publishes: the weekly scheduled Integration Tests run is the expiry alarm.
+  A failed scheduled run on `main` means a bump PR is due.
+
 ## Verifying artifacts
 
 Verify the checksums file signature and then the scripts against it:

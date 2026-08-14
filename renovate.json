@@ -1,0 +1,22 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "description": "Scoped to the certified-combo Horizon pin only; Dependabot handles github-actions updates. Schedule: Renovate cron uses AND semantics for day-of-month and day-of-week, so '* * 8-14 * 3' is exactly the second Wednesday of the month, the Horizon release day. If a release slips past the window, trigger a run from the Dependency Dashboard.",
+  "enabledManagers": ["custom.regex"],
+  "labels": ["dependencies"],
+  "schedule": ["* * 8-14 * 3"],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "One depName across both bootstrap scripts and the README badge so every location receives the identical X.Y.Z value.",
+      "managerFilePatterns": ["/^bootstrap-debian\\.sh$/", "/^bootstrap-yum\\.sh$/", "/^README\\.md$/"],
+      "matchStrings": [
+        "ONMS_VERSION=(?<currentValue>\\d+\\.\\d+\\.\\d+)",
+        "OpenNMS_Horizon-(?<currentValue>\\d+\\.\\d+\\.\\d+)-"
+      ],
+      "depNameTemplate": "OpenNMS/opennms",
+      "datasourceTemplate": "github-releases",
+      "extractVersionTemplate": "^opennms-(?<version>\\d+\\.\\d+\\.\\d+)-\\d+$",
+      "versioningTemplate": "semver"
+    }
+  ]
+}
