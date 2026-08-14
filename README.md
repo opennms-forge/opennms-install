@@ -2,6 +2,10 @@
 
 # 🚀 OpenNMS Quick Installer ✨
 
+[![Integration Tests](https://github.com/opennms-forge/opennms-install/actions/workflows/integration-tests.yml/badge.svg)](https://github.com/opennms-forge/opennms-install/actions/workflows/integration-tests.yml)
+[![Latest release](https://img.shields.io/github/v/release/opennms-forge/opennms-install)](https://github.com/opennms-forge/opennms-install/releases/latest)
+[![License](https://img.shields.io/github/license/opennms-forge/opennms-install)](LICENSE)
+
 This script is a convenient bootstrap script to install OpenNMS on Debian or CentOS systems.
 The script executes the steps documented in [Installation and Configuration guide](https://docs.opennms.com/horizon/latest/deployment/core/getting-started.html).
 
@@ -52,3 +56,9 @@ You can find us at:
 
 * Public OpenNMS [Mattermost Chat](https://chat.opennms.com/opennms/channels/opennms-discussion)
 * If you have longer discussions to share ideas, use our [OpenNMS Discourse](https://opennms.discourse.group) and tag your post with `opennms-installer`
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for how to contribute, [SUPPORT.md](SUPPORT.md) for where to ask questions, and [RELEASING.md](RELEASING.md) for how releases are cut.
+
+## 📜 License
+
+This project is licensed under the [GNU General Public License v3.0](LICENSE).

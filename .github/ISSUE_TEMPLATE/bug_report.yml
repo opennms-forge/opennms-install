@@ -1,0 +1,34 @@
+name: Bug report
+description: The installer failed or produced a broken OpenNMS setup
+labels: ["bug", "triage"]
+body:
+  - type: input
+    id: os
+    attributes:
+      label: Operating system
+      description: Distribution and version the script ran on
+      placeholder: "AlmaLinux 9.4, x86_64"
+    validations:
+      required: true
+  - type: dropdown
+    id: script
+    attributes:
+      label: Script
+      options:
+        - bootstrap-debian.sh
+        - bootstrap-yum.sh
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you expect, and what happened instead?
+    validations:
+      required: true
+  - type: textarea
+    id: log
+    attributes:
+      label: bootstrap.log excerpt
+      description: Relevant lines from bootstrap.log in the directory you ran the script from
+      render: text
