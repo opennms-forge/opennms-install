@@ -44,15 +44,18 @@ jobs:
         run: make lint
 
   integration-test:
-    name: "${{ matrix.distro }}"
-    # Entries default to amd64; the ARM64 legs override via matrix.runner.
-    runs-on: ${{ matrix.runner || 'ubuntu-24.04' }}
+    name: "${{ matrix.config.distro }}${{ matrix.runner == 'ubuntu-24.04-arm' && ' (ARM64)' || '' }}"
+    runs-on: ${{ matrix.runner }}
     timeout-minutes: 30
     needs: lint
     strategy:
       fail-fast: false
+      # Cross product: every distro runs on both architectures (issue #46).
+      # The package repos ship arm64 builds of all native packages, so the
+      # certification claim is per distro AND per architecture.
       matrix:
-        include:
+        runner: ["ubuntu-24.04", "ubuntu-24.04-arm"]
+        config:
           - distro: "Debian 13 (Trixie)"
             image: "debian:trixie"
             script: "bootstrap-debian.sh"
@@ -77,16 +80,6 @@ jobs:
           - distro: "Rocky Linux 10"
             image: "rockylinux/rockylinux:10"
             script: "bootstrap-yum.sh"
-          # One ARM64 leg per script family (issue #46): Ubuntu/deb is the
-          # original #45 jrrd2 failure case, AlmaLinux 10 represents EL.
-          - distro: "Ubuntu 24.04 LTS (ARM64)"
-            image: "ubuntu:24.04"
-            script: "bootstrap-debian.sh"
-            runner: "ubuntu-24.04-arm"
-          - distro: "AlmaLinux 10 (ARM64)"
-            image: "almalinux:10"
-            script: "bootstrap-yum.sh"
-            runner: "ubuntu-24.04-arm"
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
@@ -94,7 +87,7 @@ jobs:
           persist-credentials: false
 
       - name: Run integration test
-        run: make integration-test IMAGE="${{ matrix.image }}" SCRIPT="${{ matrix.script }}"
+        run: make integration-test IMAGE="${{ matrix.config.image }}" SCRIPT="${{ matrix.config.script }}"
 
   # Single aggregate check for branch protection: requiring this one context
   # survives matrix renames and additions.
