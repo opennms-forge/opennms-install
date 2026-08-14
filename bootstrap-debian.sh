@@ -288,7 +288,10 @@ installJdk() {
   sudo apt-get update 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
   checkError "${?}"
   echo -n "📦 Install Temurin Java Development Kit  ... "
-  sudo apt-get install -y --no-install-recommends "temurin-${REQUIRED_JDK}-jdk" 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
+  # sudo's env_reset strips the exported DEBIAN_FRONTEND, so pass it on the
+  # command line for every apt-get install, or debconf prompts (e.g. the
+  # opennms-db/noinstall note) block the bootstrap on real terminals, issue #32.
+  sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends "temurin-${REQUIRED_JDK}-jdk" 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
   checkError "${?}"
 }
 
@@ -305,7 +308,7 @@ installPostgres() {
   sudo apt-get update 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
   checkError "${?}"
   echo -n "📦 Install PostgreSQL database           ... "
-  sudo apt-get install -y postgresql-${PSQL_VERSION} 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
+  sudo DEBIAN_FRONTEND=noninteractive apt-get install -y postgresql-${PSQL_VERSION} 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
   checkError "${?}"
   # The postinst normally starts the cluster; make sure it runs on systems
   # where deferred service starts are policy (e.g. containers).
@@ -335,7 +338,7 @@ installOnmsApp() {
   # --no-install-recommends: opennms recommends openjdk-21, which apt would
   # install next to the Temurin JDK because temurin-21-jdk does not provide
   # any name in the recommends list, see issue #48.
-  sudo apt-get install -y -qq --no-install-recommends rrdtool jrrd2 jicmp jicmp6 opennms="${ONMS_VERSION}-*" opennms-webapp-hawtio="${ONMS_VERSION}-*" 2>>"${ERROR_LOG}"
+  sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends rrdtool jrrd2 jicmp jicmp6 opennms="${ONMS_VERSION}-*" opennms-webapp-hawtio="${ONMS_VERSION}-*" 2>>"${ERROR_LOG}"
   sudo -u opennms "${OPENNMS_HOME}"/bin/runjava -s 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
   checkError "${?}"
 }
