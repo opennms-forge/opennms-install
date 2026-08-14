@@ -28,7 +28,10 @@ ENDCOLOR="\e[0m"
 
 REQUIRED_SYSTEMS="Ubuntu|Debian"
 REQUIRED_JDK="21"
-PSQL_MAX_VERSION=15
+PSQL_VERSION=18
+# OpenNMS Horizon version of the certified combo. Deb and rpm installs pin
+# this exact version; bumping it requires a green CI matrix (re-certification).
+ONMS_VERSION=36.0.3
 IP_ADDRESS=$(hostname -I | awk '{print $1}') # export the address so it can also be used in the timeout command
 
 # Error codes
@@ -302,7 +305,7 @@ installPostgres() {
   sudo apt-get update 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
   checkError "${?}"
   echo -n "📦 Install PostgreSQL database           ... "
-  sudo apt-get install -y postgresql-${PSQL_MAX_VERSION} 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
+  sudo apt-get install -y postgresql-${PSQL_VERSION} 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
   checkError "${?}"
   # The postinst normally starts the cluster; make sure it runs on systems
   # where deferred service starts are policy (e.g. containers).
@@ -332,7 +335,7 @@ installOnmsApp() {
   # --no-install-recommends: opennms recommends openjdk-21, which apt would
   # install next to the Temurin JDK because temurin-21-jdk does not provide
   # any name in the recommends list, see issue #48.
-  sudo apt-get install -y -qq --no-install-recommends rrdtool jrrd2 jicmp jicmp6 opennms opennms-webapp-hawtio 2>>"${ERROR_LOG}"
+  sudo apt-get install -y -qq --no-install-recommends rrdtool jrrd2 jicmp jicmp6 opennms="${ONMS_VERSION}-1" opennms-webapp-hawtio="${ONMS_VERSION}-1" 2>>"${ERROR_LOG}"
   sudo -u opennms "${OPENNMS_HOME}"/bin/runjava -s 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
   checkError "${?}"
 }

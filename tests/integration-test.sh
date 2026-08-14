@@ -35,7 +35,7 @@ case "${SCRIPT}" in
     PREREQS="dnf install -y systemd sudo hostname && dnf clean all && chmod 0640 /etc/shadow"
     # The EL unit name carries the version; derive it from the script so a
     # version bump there cannot drift from this check.
-    PG_SERVICE="postgresql-$(sed -n 's/^PSQL_MAX_VERSION=//p' bootstrap-yum.sh)"
+    PG_SERVICE="postgresql-$(sed -n 's/^PSQL_VERSION=//p' bootstrap-yum.sh)"
     ;;
   *)
     echo "Unknown bootstrap script: ${SCRIPT}" >&2

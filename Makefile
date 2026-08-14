@@ -6,8 +6,9 @@ SCRIPT ?= bootstrap-debian.sh
 
 .PHONY: lint
 lint:
-	shellcheck -S warning bootstrap-debian.sh bootstrap-yum.sh tests/integration-test.sh
+	shellcheck -S warning bootstrap-debian.sh bootstrap-yum.sh tests/integration-test.sh tests/check-versions.sh
 	actionlint
+	tests/check-versions.sh
 
 .PHONY: integration-test
 integration-test:
