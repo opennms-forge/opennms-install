@@ -1,0 +1,22 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "description": "Scoped to the certified-combo Horizon pin only; Dependabot handles github-actions updates.",
+  "enabledManagers": ["custom.regex"],
+  "labels": ["dependencies"],
+  "schedule": ["before 8am on monday"],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "One depName across both bootstrap scripts and the README badge so every location receives the identical X.Y.Z value.",
+      "managerFilePatterns": ["/^bootstrap-debian\\.sh$/", "/^bootstrap-yum\\.sh$/", "/^README\\.md$/"],
+      "matchStrings": [
+        "ONMS_VERSION=(?<currentValue>\\d+\\.\\d+\\.\\d+)",
+        "OpenNMS_Horizon-(?<currentValue>\\d+\\.\\d+\\.\\d+)-"
+      ],
+      "depNameTemplate": "OpenNMS/opennms",
+      "datasourceTemplate": "github-releases",
+      "extractVersionTemplate": "^opennms-(?<version>\\d+\\.\\d+\\.\\d+)-\\d+$",
+      "versioningTemplate": "semver"
+    }
+  ]
+}
