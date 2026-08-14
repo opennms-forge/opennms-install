@@ -12,10 +12,13 @@ trap 's=${?}; echo >&2 "${0}: Error on line "${LINENO}": ${BASH_COMMAND}"; exit 
 # Default build identifier set to stable
 ERROR_LOG="bootstrap.log"
 POSTGRES_USER="postgres"
-POSTGRES_PASS=""
-DB_NAME="opennms"
-DB_USER="opennms"
-DB_PASS="opennms"
+POSTGRES_PASS="${POSTGRES_PASS:-}"
+DB_NAME="${DB_NAME:-opennms}"
+DB_USER="${DB_USER:-opennms}"
+DB_PASS="${DB_PASS:-opennms}"
+# Set ONMS_UNATTENDED=yes to skip the confirmation and credential prompts,
+# e.g. for CI. Requires POSTGRES_PASS to be set in the environment.
+UNATTENDED="${ONMS_UNATTENDED:-no}"
 OPENNMS_HOME="/opt/opennms"
 ANSWER="No"
 RED="\e[31m"
@@ -103,6 +106,15 @@ showDisclaimer() {
   echo ""
   echo " - https://github.com/opennms-forge/opennms-install/issues -"
   echo ""
+
+  if [[ "${UNATTENDED}" == "yes" ]]; then
+    echo "🤖 Unattended mode, skipping confirmation"
+    echo ""
+    echo "🚀 Starting setup procedure"
+    echo ""
+    return
+  fi
+
   read -r -p "If you want to proceed, type YES: " ANSWER
 
   # Set bash to case insensitive
@@ -157,8 +169,9 @@ prepare() {
   checkError "${?}"
 
   # Ensure curl and gnupg2 is available
+  # --allowerasing: EL ships curl-minimal which conflicts with curl
   echo -n "📦 Install curl                          ... "
-  sudo dnf -y install curl 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
+  sudo dnf -y install --allowerasing curl 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
   checkError "${?}"
 }
 
@@ -166,6 +179,14 @@ prepare() {
 # Helper to request Postgres credentials to initialize the
 # OpenNMS database.
 queryDbCredentials() {
+  if [[ "${UNATTENDED}" == "yes" ]]; then
+    if [[ -z "${POSTGRES_PASS}" ]]; then
+      echo "Unattended mode requires the POSTGRES_PASS environment variable to be set."
+      exit "${E_ILLEGAL_ARGS}"
+    fi
+    return
+  fi
+
   echo "👩‍💻 Enter credentials for the database and connection"
   echo "   Set a Postgres root password"
   while true; do
@@ -250,7 +271,7 @@ EOF
 # Install the PostgreSQL database
 installPostgres() {
   echo "📦 Add PostgreSQL repository             ... "
-  sudo dnf install -y "https://download.postgresql.org/pub/repos/yum/reporpms/EL-${OS_MAJOR_VERSION}-x86_64/pgdg-redhat-repo-latest.noarch.rpm"
+  sudo dnf install -y "https://download.postgresql.org/pub/repos/yum/reporpms/EL-${OS_MAJOR_VERSION}-$(uname -m)/pgdg-redhat-repo-latest.noarch.rpm"
   checkError "${?}"
   echo -n "📦 Install PostgreSQL ${PSQL_MAX_VERSION} database        ... "
   sudo dnf install -y postgresql${PSQL_MAX_VERSION}-server 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
@@ -260,9 +281,12 @@ installPostgres() {
 ####
 # Install OpenNMS rpm repository for specific release
 installOnmsRepo() {
-  echo "📦 Install OpenNMS Repository            ... "
-  sudo dnf -y install https://yum.opennms.org/repofiles/opennms-repo-stable-rhel9.noarch.rpm
-  sudo sed -i 's/gpgcheck=1/gpgcheck=0/g' /etc/yum.repos.d/opennms-repo-stable-rhel9.repo
+  echo -n "📦 Install OpenNMS repository            ... "
+  sudo dnf -y install "https://yum.opennms.org/repofiles/opennms-repo-stable-rhel${OS_MAJOR_VERSION}.noarch.rpm" 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
+  checkError "${?}"
+  echo -n "📦 Disable GPG check on repository       ... "
+  sudo sed -i 's/gpgcheck=1/gpgcheck=0/g' /etc/yum.repos.d/opennms-repo-stable-*.repo 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
+  checkError "${?}"
 }
 
 ####
@@ -400,7 +424,10 @@ lockdownDbUser() {
 # Disable the repo and lock the versions. 
 disableRepo() {
   echo -n "👮 Disabling autoupdates                 ... "
-  sudo dnf config-manager --disable opennms-repo-stable-*
+  # Rocky 10 ships dnf5 without the config-manager plugin; fall back to
+  # disabling the repo file directly.
+  sudo dnf config-manager --disable "opennms-repo-stable-*" 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}" \
+    || sudo sed -i 's/^enabled=1/enabled=0/' /etc/yum.repos.d/opennms-repo-stable-*.repo 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
   checkError "${?}"
 }
 
@@ -412,7 +439,7 @@ waitForStart() {
 }
 
 # Execute setup procedure
-clear
+clear 2>/dev/null || true # No TTY in unattended runs
 checkRequirements
 showDisclaimer
 prepare

@@ -1,3 +1,12 @@
 .idea/
 bootstrap.log
 
+# AI tools
+_bmad-output/
+_bmad/
+openspec/
+.claude/
+.agent/
+.agents/
+
+

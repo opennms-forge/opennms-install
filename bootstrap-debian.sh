@@ -13,10 +13,13 @@ trap 's=${?}; echo >&2 "${0}: Error on line "${LINENO}": ${BASH_COMMAND}"; exit 
 export DEBIAN_FRONTEND=noninteractive
 ERROR_LOG="bootstrap.log"
 POSTGRES_USER="postgres"
-POSTGRES_PASS=""
-DB_NAME="opennms"
-DB_USER="opennms"
-DB_PASS="opennms"
+POSTGRES_PASS="${POSTGRES_PASS:-}"
+DB_NAME="${DB_NAME:-opennms}"
+DB_USER="${DB_USER:-opennms}"
+DB_PASS="${DB_PASS:-opennms}"
+# Set ONMS_UNATTENDED=yes to skip the confirmation and credential prompts,
+# e.g. for CI. Requires POSTGRES_PASS to be set in the environment.
+UNATTENDED="${ONMS_UNATTENDED:-no}"
 OPENNMS_HOME="/opt/opennms"
 ANSWER="No"
 RED="\e[31m"
@@ -108,6 +111,15 @@ showDisclaimer() {
   echo ""
   echo " - https://github.com/opennms-forge/opennms-install/issues -"
   echo ""
+
+  if [[ "${UNATTENDED}" == "yes" ]]; then
+    echo "🤖 Unattended mode, skipping confirmation"
+    echo ""
+    echo "🚀 Starting setup procedure"
+    echo ""
+    return
+  fi
+
   read -r -p "If you want to proceed, type YES: " ANSWER
 
   # Set bash to case insensitive
@@ -174,6 +186,14 @@ prepare() {
 # Helper to request Postgres credentials to initialize the
 # OpenNMS database.
 queryDbCredentials() {
+  if [[ "${UNATTENDED}" == "yes" ]]; then
+    if [[ -z "${POSTGRES_PASS}" ]]; then
+      echo "Unattended mode requires the POSTGRES_PASS environment variable to be set."
+      exit "${E_ILLEGAL_ARGS}"
+    fi
+    return
+  fi
+
   echo "👩‍💻 Enter credentials for the database and connection"
   echo "   Set a Postgres root password"
   while true; do
@@ -284,14 +304,25 @@ installPostgres() {
   echo -n "📦 Install PostgreSQL database           ... "
   sudo apt-get install -y postgresql-${PSQL_MAX_VERSION} 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
   checkError "${?}"
+  # The postinst normally starts the cluster; make sure it runs on systems
+  # where deferred service starts are policy (e.g. containers).
+  echo -n "🚀 Start PostgreSQL database             ... "
+  sudo systemctl start postgresql 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
+  checkError "${?}"
 }
 
 ####
 # Install OpenNMS Debian repository for specific release
 installOnmsRepo() {
-  echo "📦 Install Horizon Repository            ... "
-  curl -1sLf 'https://packages.opennms.com/public/stable/setup.deb.sh' | sudo -E bash
-  curl -1sLf 'https://packages.opennms.com/public/common/setup.deb.sh' | sudo -E bash
+  echo -n "📦 Add OpenNMS repository key            ... "
+  curl -1sLf "https://debian.opennms.org/OPENNMS-GPG-KEY" | gpg --dearmor | sudo tee "/usr/share/keyrings/opennms.gpg" 1>/dev/null 2>>"${ERROR_LOG}"
+  checkError "${?}"
+  echo -n "📦 Add OpenNMS repository                ... "
+  echo "deb [signed-by=/usr/share/keyrings/opennms.gpg] https://debian.opennms.org stable main" | sudo tee /etc/apt/sources.list.d/opennms.list 1>/dev/null 2>>"${ERROR_LOG}"
+  checkError "${?}"
+  echo -n "📦 Update apt cache                      ... "
+  sudo apt-get update 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
+  checkError "${?}"
 }
 
 ####
@@ -312,8 +343,10 @@ installOnmsApp() {
 setCredentials() {
   echo ""
   echo -n "👩‍🔧 Create secure vault for Postgres      ... "
-  sudo -u opennms ${OPENNMS_HOME}/bin/scvcli set postgres "${DB_USER}" "${DB_PASS}" 1>/dev/null 2>>"${ERROR_LOG}"
-  sudo -u opennms ${OPENNMS_HOME}/bin/scvcli set postgres-admin "${POSTGRES_USER}" "${POSTGRES_PASS}" 1>/dev/null 2>>"${ERROR_LOG}"
+  # Run scvcli with bash: the script uses the bashism $(<java.conf) but has
+  # a /bin/sh shebang, which breaks on Debian where /bin/sh is dash.
+  sudo -u opennms bash "${OPENNMS_HOME}/bin/scvcli" set postgres "${DB_USER}" "${DB_PASS}" 1>/dev/null 2>>"${ERROR_LOG}"
+  sudo -u opennms bash "${OPENNMS_HOME}/bin/scvcli" set postgres-admin "${POSTGRES_USER}" "${POSTGRES_PASS}" 1>/dev/null 2>>"${ERROR_LOG}"
   checkError "${?}"
   echo -n "🔧 Generate OpenNMS database config      ... "
   if [[ -f "${OPENNMS_HOME}"/etc/opennms-datasources.xml ]]; then
@@ -418,7 +451,7 @@ waitForStart() {
 }
 
 # Execute setup procedure
-clear
+clear 2>/dev/null || true # No TTY in unattended runs
 checkRequirements
 showDisclaimer
 prepare
