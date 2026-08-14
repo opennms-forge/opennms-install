@@ -344,8 +344,11 @@ installOnmsApp() {
 }
 
 ####
-# Generate OpenNMS configuration file for accessing the PostgreSQL
-# Database with credentials
+# Provide the database connection settings for the stock Horizon 36
+# opennms-datasources.xml: it resolves credentials from the secure
+# credentials vault first (aliases postgres and postgres-admin) and the
+# database name from the OPENNMS_DBNAME environment variable. The
+# packaged file is left untouched.
 setCredentials() {
   echo ""
   echo -n "👩‍🔧 Create secure vault for Postgres      ... "
@@ -354,58 +357,13 @@ setCredentials() {
   sudo -u opennms bash "${OPENNMS_HOME}/bin/scvcli" set postgres "${DB_USER}" "${DB_PASS}" 1>/dev/null 2>>"${ERROR_LOG}"
   sudo -u opennms bash "${OPENNMS_HOME}/bin/scvcli" set postgres-admin "${POSTGRES_USER}" "${POSTGRES_PASS}" 1>/dev/null 2>>"${ERROR_LOG}"
   checkError "${?}"
-  echo -n "🔧 Generate OpenNMS database config      ... "
-  if [[ -f "${OPENNMS_HOME}"/etc/opennms-datasources.xml ]]; then
-    printf '<?xml version="1.0" encoding="UTF-8"?>
-<datasource-configuration xmlns:this="http://xmlns.opennms.org/xsd/config/opennms-datasources"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://xmlns.opennms.org/xsd/config/opennms-datasources
-  http://www.opennms.org/xsd/config/opennms-datasources.xsd ">
-
-  <connection-pool factory="org.opennms.core.db.HikariCPConnectionFactory"
-      idleTimeout="600"
-      loginTimeout="3"
-      minPool="25"
-      maxPool="50"
-      maxSize="50" />
-
-  <jdbc-data-source name="opennms"
-                    database-name="%s"
-                    class-name="org.postgresql.Driver"
-                    url="jdbc:postgresql://localhost:5432/%s"
-                    user-name="${scv:postgres:username}"
-                    password="${scv:postgres:password}" />
-
-  <jdbc-data-source name="opennms-admin"
-                    database-name="template1"
-                    class-name="org.postgresql.Driver"
-                    url="jdbc:postgresql://localhost:5432/template1"
-                    user-name="${scv:postgres-admin:username}"
-                    password="${scv:postgres-admin:password}">
-    <connection-pool idleTimeout="600"
-                     minPool="0"
-                     maxPool="10"
-                     maxSize="50" />
-  </jdbc-data-source>
-
-  <jdbc-data-source name="opennms-monitor"
-                    database-name="postgres"
-                    class-name="org.postgresql.Driver"
-                    url="jdbc:postgresql://localhost:5432/postgres"
-                    user-name="${scv:postgres-admin:username}"
-                    password="${scv:postgres-admin:password}">
-    <connection-pool idleTimeout="600"
-                     minPool="0"
-                     maxPool="10"
-                     maxSize="50" />
-  </jdbc-data-source>
-</datasource-configuration>' "${DB_NAME}" "${DB_NAME}" \
-  | sudo -u opennms tee "${OPENNMS_HOME}"/etc/opennms-datasources.xml 1>>/dev/null 2>>"${ERROR_LOG}"
+  echo -n "🔧 Set OpenNMS database name             ... "
+  # bin/install and the service wrapper source opennms.conf without
+  # set -a, so the variable must be exported to reach the JVM. Write as
+  # the opennms user: the installer validates etc/ for read/write by it.
+  printf '# Database name for the stock opennms-datasources.xml (set by opennms-install)\nexport OPENNMS_DBNAME="%s"\n' "${DB_NAME}" \
+  | sudo -u opennms tee -a "${OPENNMS_HOME}"/etc/opennms.conf 1>/dev/null 2>>"${ERROR_LOG}"
   checkError "${?}"
-  else
-    echo "No OpenNMS configuration found in ${OPENNMS_HOME}/etc"
-    exit "${E_ILLEGAL_ARGS}"
-  fi
 }
 
 ####
