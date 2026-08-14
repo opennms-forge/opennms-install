@@ -6,7 +6,7 @@ Two entry points: `bootstrap-debian.sh` and `bootstrap-yum.sh`; shared test harn
 ## Commands
 
 ```bash
-make lint                                              # shellcheck + actionlint
+make lint                                              # shellcheck + actionlint + version-consistency check
 make integration-test IMAGE=debian:trixie SCRIPT=bootstrap-debian.sh
 make integration-test IMAGE=almalinux:9 SCRIPT=bootstrap-yum.sh
 ```
@@ -29,3 +29,6 @@ CI (`integration-tests.yml`) runs lint plus an 8-distro matrix; branch protectio
 - EL minimal images ship `curl-minimal`, which conflicts with `curl`; keep `--allowerasing`.
 - Debian/Ubuntu library images have no systemd; the harness builds a throwaway image layering it in and boots with `--privileged --cgroupns=host`.
 - `dnf config-manager` is missing on some EL10 images (Rocky 10 ships dnf5 without the plugin); the scripts fall back to sed on the repo file.
+- The scripts pin a certified combo (`ONMS_VERSION`, `PSQL_VERSION`, mirrored in the README badges; `make lint` enforces agreement).
+  Deb pins expire when upstream releases because debian.opennms.org serves only the newest version; rpm pins do not (yum.opennms.org keeps history).
+  Renovate bumps the Horizon pin; see RELEASING.md for the procedure.
