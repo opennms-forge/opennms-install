@@ -26,6 +26,8 @@ case "${SCRIPT}" in
   bootstrap-debian.sh)
     PREREQS="apt-get update && apt-get install -y systemd systemd-sysv sudo lsb-release && apt-get clean"
     PG_SERVICE="postgresql"
+    # shellcheck disable=SC2016
+    DS_VERIFY='pkg="$(dpkg -S /opt/opennms/etc/opennms-datasources.xml | cut -d: -f1)"; ! dpkg --verify "${pkg}" | grep datasources'
     ;;
   bootstrap-yum.sh)
     # chmod /etc/shadow: EL ships it with mode 0000, so unix_chkpwd needs
@@ -36,6 +38,7 @@ case "${SCRIPT}" in
     # The EL unit name carries the version; derive it from the script so a
     # version bump there cannot drift from this check.
     PG_SERVICE="postgresql-$(sed -n 's/^PSQL_VERSION=//p' bootstrap-yum.sh)"
+    DS_VERIFY='! rpm -Vf /opt/opennms/etc/opennms-datasources.xml | grep datasources'
     ;;
   *)
     echo "Unknown bootstrap script: ${SCRIPT}" >&2
@@ -77,9 +80,15 @@ docker exec "${CONTAINER}" mkdir -p /workspace
 docker cp . "${CONTAINER}:/workspace/"
 
 echo "== Run ${SCRIPT}"
+# Custom database identifiers, all distinct from the stock defaults in the
+# Horizon datasources file (opennms/postgres), so a silent fallback to the
+# defaults cannot pass the install.
 docker exec \
   -e ONMS_UNATTENDED=yes \
   -e POSTGRES_PASS=bootstrap-ci \
+  -e DB_NAME=horizon \
+  -e DB_USER=horizon \
+  -e DB_PASS=bootstrap-ci-db \
   "${CONTAINER}" bash -c "cd /workspace && bash ${SCRIPT}"
 
 echo "== Verify installation"
@@ -88,3 +97,7 @@ docker exec "${CONTAINER}" systemctl is-active "${PG_SERVICE}"
 echo -n "OpenNMS service: "
 docker exec "${CONTAINER}" systemctl is-active opennms
 docker exec "${CONTAINER}" curl -f -s -o /dev/null -w "Web UI HTTP status: %{http_code}\n" http://localhost:8980/opennms/
+echo -n "Packaged datasources file pristine: "
+docker exec "${CONTAINER}" bash -c "${DS_VERIFY}" && echo "yes"
+echo -n "OPENNMS_DBNAME export in opennms.conf: "
+docker exec "${CONTAINER}" grep -c 'export OPENNMS_DBNAME="horizon"' /opt/opennms/etc/opennms.conf
