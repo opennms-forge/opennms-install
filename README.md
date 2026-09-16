@@ -9,7 +9,7 @@
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-18-336791)](https://docs.opennms.com/horizon/36/deployment/core/system-requirements.html)
 
 This script is a convenient bootstrap script to install OpenNMS on Debian or CentOS systems.
-The script executes the steps documented in [Installation and Configuration guide](https://docs.opennms.com/horizon/latest/deployment/core/getting-started.html).
+The script executes the steps documented in [Installation and Configuration guide](https://docs.opennms.com/horizon/latest/deployment/core/install.html).
 
 The scripts install a certified combination, shown in the badges above: the pinned OpenNMS Horizon and PostgreSQL versions are exactly what the CI matrix validates.
 The certified combo is tested on, each on x86_64 and arm64:
@@ -29,15 +29,15 @@ We have also started to work on Ansible roles for the Ubuntu-based operating sys
 
 ## 🎯 Scope
 
-* Bootstrap a single-node OpenNMS system on RPM or DEB-based systems quickly with the certified stable release shown in the badges
-* Installation procedure closely following the best practices from our official docs
-* Scripts don't deal with existing installations or upgrades
-* Scripts don't configure or install Minions, Sentinels, or distributed time series storage like Cortex.
-* Users can use the installed system to learn and investigate how to configure OpenNMS Horizon in complex distributed environments, which gives them a quick starting point.
+* Bootstrap a single-node OpenNMS system on RPM or DEB-based systems quickly with the certified stable release shown in the badges.
+* Installation procedure follows best practices from our official docs.
+* Scripts can't be used to upgrade an existing installations.
+* Scripts don't configure or install Minions, Sentinels, or distributed time series storage like Prometheus, Mimir, Thanos or Cortex.
+* Users can use the installed system to learn and investigate how to configure OpenNMS Horizon.
 
 ## 🏆 Goal
 
-* Give people a way to install OpenNMS Horizon on their system to get familiar with OpenNMS Horizon quickly on a bare metal system.
+* Give people a way to install OpenNMS Horizon on their system to get familiar with OpenNMS Horizon quickly on a bare metal system or a virtual machine.
 * Remove the need to know Docker or Ansible to quickly bootstrap an OpenNMS Horizon system.
 * Keep it simple and support operating systems based on official packages using RPM and DEB.
 
