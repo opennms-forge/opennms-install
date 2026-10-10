@@ -276,6 +276,12 @@ installPostgres() {
   echo "📦 Add PostgreSQL repository             ... "
   sudo dnf install -y "https://download.postgresql.org/pub/repos/yum/reporpms/EL-${OS_MAJOR_VERSION}-$(uname -m)/pgdg-redhat-repo-latest.noarch.rpm"
   checkError "${?}"
+  # The PGDG repo file builds its baseurl from $releasever_major.$releasever_minor.
+  # CentOS Stream has no minor version, so that expands to e.g. rhel-9.-x86_64
+  # and 404s. The per-major directories exist upstream, so use those instead.
+  echo -n "📦 Pin PostgreSQL repo to major version  ... "
+  sudo sed -i "s/\$releasever_major\.\$releasever_minor/${OS_MAJOR_VERSION}/g" /etc/yum.repos.d/pgdg-redhat-all.repo
+  checkError "${?}"
   echo -n "📦 Install PostgreSQL ${PSQL_VERSION} database        ... "
   sudo dnf install -y postgresql${PSQL_VERSION}-server 1>>"${ERROR_LOG}" 2>>"${ERROR_LOG}"
   checkError "${?}"
