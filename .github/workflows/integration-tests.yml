@@ -27,7 +27,7 @@ concurrency:
 jobs:
   lint:
     name: "Lint"
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 5
     steps:
       - name: Checkout code
@@ -44,7 +44,7 @@ jobs:
         run: make lint
 
   integration-test:
-    name: "${{ matrix.config.distro }}${{ matrix.runner == 'ubuntu-24.04-arm' && ' (ARM64)' || '' }}"
+    name: "${{ matrix.config.distro }}${{ matrix.runner == 'ubuntu-26.04-arm' && ' (ARM64)' || '' }}"
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 30
     needs: lint
@@ -54,13 +54,16 @@ jobs:
       # The package repos ship arm64 builds of all native packages, so the
       # certification claim is per distro AND per architecture.
       matrix:
-        runner: ["ubuntu-24.04", "ubuntu-24.04-arm"]
+        runner: ["ubuntu-26.04", "ubuntu-26.04-arm"]
         config:
           - distro: "Debian 13 (Trixie)"
             image: "debian:trixie"
             script: "bootstrap-debian.sh"
           - distro: "Ubuntu 24.04 LTS"
             image: "ubuntu:24.04"
+            script: "bootstrap-debian.sh"
+          - distro: "Ubuntu 26.04 LTS"
+            image: "ubuntu:26.04"
             script: "bootstrap-debian.sh"
           - distro: "CentOS Stream 9"
             image: "quay.io/centos/centos:stream9"
@@ -93,7 +96,7 @@ jobs:
   # survives matrix renames and additions.
   gate:
     name: "Gate"
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 5
     needs: [lint, integration-test]
     if: always()
