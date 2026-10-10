@@ -1,0 +1,9 @@
+# Copyright 2026 Ronny Trommer <ronny@no42.org>
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+# actionlint (<= 1.7.12) does not know the GitHub-hosted Ubuntu 26.04
+# runner labels yet. Drop this once a release ships them.
+self-hosted-runner:
+  labels:
+    - ubuntu-26.04
+    - ubuntu-26.04-arm
