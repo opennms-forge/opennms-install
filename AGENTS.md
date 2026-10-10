@@ -12,7 +12,7 @@ make integration-test IMAGE=almalinux:9 SCRIPT=bootstrap-yum.sh
 ```
 
 A full integration test installs OpenNMS in a systemd container and takes 3-15 minutes.
-CI (`integration-tests.yml`) runs lint plus an 8-distro matrix; branch protection requires the aggregate `Gate` check.
+CI (`integration-tests.yml`) runs lint plus a 9-distro matrix; branch protection requires the aggregate `Gate` check.
 
 ## Conventions
 
