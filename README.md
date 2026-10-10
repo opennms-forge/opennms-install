@@ -15,6 +15,7 @@ The scripts install a certified combination, shown in the badges above: the pinn
 The certified combo is tested on, each on x86_64 and arm64:
 
 * Ubuntu 24.04 (Noble Numbat)
+* Ubuntu 26.04 (Resolute Raccoon)
 * Debian 13 (Trixie)
 * CentOS Stream 9/10
 * Rocky Linux 9/10
