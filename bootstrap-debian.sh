@@ -31,7 +31,7 @@ REQUIRED_JDK="21"
 PSQL_VERSION=18
 # OpenNMS Horizon version of the certified combo. Deb and rpm installs pin
 # this exact version; bumping it requires a green CI matrix (re-certification).
-ONMS_VERSION=36.0.4
+ONMS_VERSION=36.0.5
 IP_ADDRESS=$(hostname -I | awk '{print $1}') # export the address so it can also be used in the timeout command
 
 # Error codes
