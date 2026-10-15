@@ -23,7 +23,7 @@ The certified combo is tested on, each on x86_64 and arm64:
 
 The OpenNMS package repositories ship arm64 builds of all native packages (jrrd2, jicmp, jicmp6), so the scripts work unmodified on both architectures; the CI matrix verifies every distro on both.
 
-[![asciicast](https://asciinema.org/a/dCzY67dR6Ph07X2XLEdoGe9FC.svg)](https://asciinema.org/a/dCzY67dR6Ph07X2XLEdoGe9FC)
+[![asciicast](docs/asciicast.svg)](https://asciinema.org/a/dCzY67dR6Ph07X2XLEdoGe9FC)
 
 💁‍♀️ If you want to learn in detail, take a look at the deployment section in our documentation for [OpenNMS Horizon](https://docs.opennms.com/horizon/latest/) or [OpenNMS Meridian](https://docs.opennms.com/meridian/latest/).
 We have also started to work on Ansible roles for the Ubuntu-based operating systems, which you can find at https://github.com/opennms-forge/ansible-opennms.
