@@ -92,6 +92,22 @@ jobs:
       - name: Run integration test
         run: make integration-test IMAGE="${{ matrix.config.image }}" SCRIPT="${{ matrix.config.script }}"
 
+  # Runners resolve the repo hostnames to the US mirror, so this checks each
+  # regional mirror directly for the pinned version. Not part of the Gate:
+  # mirror lag is not something a PR can fix.
+  mirrors:
+    name: "Mirrors"
+    runs-on: ubuntu-26.04
+    timeout-minutes: 5
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Check pinned version on each mirror
+        run: make check-mirrors
+
   # Single aggregate check for branch protection: requiring this one context
   # survives matrix renames and additions.
   gate:
