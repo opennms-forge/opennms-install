@@ -1,0 +1,38 @@
+# Copyright 2026 Ronny Trommer <ronny@no42.org>
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+# Runners resolve the repo hostnames to the US mirror, so this checks each
+# regional mirror directly for the pinned version. A separate workflow so the
+# README can show its own badge, and outside the Gate: mirror lag is not
+# something a PR can fix.
+name: Mirrors
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  # Daily, so the badge reflects the current mirror state between pushes.
+  schedule:
+    - cron: "0 6 * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  mirrors:
+    name: "Mirrors"
+    runs-on: ubuntu-26.04
+    timeout-minutes: 5
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Check pinned version on each mirror
+        run: make check-mirrors

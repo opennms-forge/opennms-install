@@ -30,6 +30,9 @@ The two pins bump independently: Horizon on its release cadence (second Wednesda
 - A green 9-distro matrix (`Gate`) on the bump PR is the re-certification; merging the PR certifies the new combo.
 - debian.opennms.org serves only the newest release, so the deb pin breaks when upstream publishes: the weekly scheduled Integration Tests run is the expiry alarm.
   A failed scheduled run on `main` means a bump PR is due.
+- The package servers have a European and a US mirror, and CI runners only reach the US one.
+  The daily `Mirrors` workflow (`make check-mirrors`, README badge) checks that each mirror publishes the pinned version.
+  It is not part of `Gate`: a failure means a mirror lags behind, which needs a fix on the mirror, not in this repo.
 
 ## Verifying artifacts
 

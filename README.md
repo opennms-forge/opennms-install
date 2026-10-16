@@ -3,6 +3,7 @@
 # 🚀 OpenNMS Quick Installer ✨
 
 [![Integration Tests](https://github.com/opennms-forge/opennms-install/actions/workflows/integration-tests.yml/badge.svg)](https://github.com/opennms-forge/opennms-install/actions/workflows/integration-tests.yml)
+[![Mirrors](https://github.com/opennms-forge/opennms-install/actions/workflows/mirrors.yml/badge.svg)](https://github.com/opennms-forge/opennms-install/actions/workflows/mirrors.yml)
 [![Latest release](https://img.shields.io/github/v/release/opennms-forge/opennms-install)](https://github.com/opennms-forge/opennms-install/releases/latest)
 [![License](https://img.shields.io/github/license/opennms-forge/opennms-install)](LICENSE)
 [![OpenNMS Horizon](https://img.shields.io/badge/OpenNMS_Horizon-36.0.5-4c9d45)](https://docs.opennms.com/horizon/36/releasenotes/whatsnew.html)
